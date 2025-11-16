@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Detalles de la Rutina</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style_detalle_rutina.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <h1 class="dashboard-title">Detalles de la Rutina: {{ rutina.Nombre_rutina }}</h1>
+
+    {% if ejercicios_por_dia %}
+      {% for dia, ejercicios in ejercicios_por_dia.items() %}
+      <div class="dia-container">
+        <h2 class="dia-title">{{ dia }}</h2> <!-- Título del día -->
+
+        <div class="ejercicios-list">
+          {% for ejercicio in ejercicios %}
+          <button class="ejercicio-btn" onclick="irADetalleEjercicio('{{ rutina.id }}', '{{ ejercicio.id }}')">
+            <strong>{{ ejercicio.Nombre_ejercicio }}</strong><br>
+            <em>{{ ejercicio.Subgrupo_muscular }}</em>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p>No tienes ejercicios en esta rutina.</p>
+    {% endif %}
+
+    <button id="verEntrenamientos" class="btn">Entrenamientos Realizados</button>
+    <div id="calendario" style="display: none; margin-top: 20px;"></div>
+  </div>
+
+  <script>
+    function irADetalleEjercicio(rutinaId, ejercicioId) {
+    if (!rutinaId || !ejercicioId) {
+      console.error("ID de rutina o ejercicio no definido.");
+      return;
+    }
+    window.location.href = `/detalle_ejercicio/${rutinaId}/${ejercicioId}`;
+  }
+
+    // Generar colores aleatorios para los botones
+    document.addEventListener("DOMContentLoaded", function () {
+      const botones = document.querySelectorAll(".ejercicio-btn");
+      botones.forEach(boton => {
+        let randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+        boton.style.backgroundColor = randomColor;
+      });
+    });
+
+    document.getElementById("verEntrenamientos").addEventListener("click", function() {
+      document.getElementById("calendario").style.display = "block";
+      fetch("/api/obtener_fechas_entrenamiento")
+        .then(response => response.json())
+        .then(data => {
+          let calendarEl = document.getElementById("calendario");
+          let calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            events: data.fechas.map(fecha => ({
+              title: "Entrenamiento",
+              start: fecha,
+              backgroundColor: "#f39c12",
+              borderColor: "#e67e22",
+              classNames: ["evento-entrenamiento"]
+            })),
+            dateClick: function(info) {
+              if (data.fechas.includes(info.dateStr)) {
+                window.location.href = `/entrenamientos_realizados/${info.dateStr}`;
+              }
+            }
+          });
+          calendar.render();
+        })
+        .catch(error => console.error("Error al cargar el calendario:", error));
+    });
+  </script>
+</body>
+</html>
