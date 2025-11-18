@@ -34,7 +34,7 @@ def registrar_entrenamiento(current_user):
     cursor = conn.cursor()
     try:
         # Insertar el entrenamiento con el día de la semana
-        cursor.execute("INSERT INTO Entrenamientos (Usuario_id, Dia_semana) VALUES (?, ?)", (current_user, dia_semana))
+        cursor.execute("INSERT INTO Entrenamientos (Usuario_id, Dia_semana) VALUES (%s, %s)", (current_user, dia_semana))
         conn.commit()
         entrenamiento_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]  # Obtener ID del último insertado
 
@@ -46,7 +46,7 @@ def registrar_entrenamiento(current_user):
 
             cursor.execute("""
                 INSERT INTO Series (Entrenamiento_id, Peso, Repeticiones, Fecha, Id_ejercicio)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s)
             """, (entrenamiento_id, peso, repeticiones, fecha_obj.strftime("%Y-%m-%d"), ejercicio_id))
         
         conn.commit()

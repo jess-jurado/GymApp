@@ -64,7 +64,7 @@ def crear_rutina(current_user):
     try:
         # Verificar si ya existe una rutina con el mismo nombre para el usuario
         cursor.execute(
-            "SELECT id FROM Rutinas WHERE Usuario_id = ? AND Nombre_rutina = ?",
+            "SELECT id FROM Rutinas WHERE Usuario_id = %s AND Nombre_rutina = %s",
             (current_user, nombre_rutina)
         )
         if cursor.fetchone():
@@ -103,7 +103,7 @@ def obtener_rutinas(current_user):
     try:
         # Consultar las rutinas asociadas al usuario
         cursor.execute(
-            "SELECT id, Nombre_rutina, Dia, Id_ejercicio FROM Rutinas WHERE Usuario_id = ?",
+            "SELECT id, Nombre_rutina, Dia, Id_ejercicio FROM Rutinas WHERE Usuario_id = %s",
             (current_user,)
         )
         rows = cursor.fetchall()
@@ -144,13 +144,13 @@ def actualizar_rutina(current_user, rutina_id):
     cursor = conn.cursor()
     try:
         # Verificar que la rutina existe y pertenece al usuario
-        cursor.execute("SELECT * FROM Rutinas WHERE id = ? AND Usuario_id = ?", (rutina_id, current_user))
+        cursor.execute("SELECT * FROM Rutinas WHERE id = %s AND Usuario_id = %s", (rutina_id, current_user))
         if not cursor.fetchone():
             return jsonify({"error": "Rutina no encontrada o no autorizada"}), 404
 
         # Si se quiere actualizar el id_ejercicio, verificar que exista en la tabla Ejercicios
         if id_ejercicio:
-            cursor.execute("SELECT id FROM Ejercicios WHERE id = ?", (id_ejercicio,))
+            cursor.execute("SELECT id FROM Ejercicios WHERE id = %s", (id_ejercicio,))
             if not cursor.fetchone():
                 return jsonify({"error": "El id_ejercicio proporcionado no existe"}), 400
 
@@ -158,17 +158,17 @@ def actualizar_rutina(current_user, rutina_id):
         campos = []
         params = []
         if nombre_rutina:
-            campos.append("Nombre_rutina = ?")
+            campos.append("Nombre_rutina = %s")
             params.append(nombre_rutina)
         if dia:
-            campos.append("Dia = ?")
+            campos.append("Dia = %s")
             params.append(dia)
         if id_ejercicio:
-            campos.append("Id_ejercicio = ?")
+            campos.append("Id_ejercicio = %s")
             params.append(id_ejercicio)
 
         params.extend([rutina_id, current_user])
-        query = "UPDATE Rutinas SET " + ", ".join(campos) + " WHERE id = ? AND Usuario_id = ?"
+        query = "UPDATE Rutinas SET " + ", ".join(campos) + " WHERE id = %s AND Usuario_id = %s"
         cursor.execute(query, tuple(params))
         conn.commit()
 
@@ -188,11 +188,11 @@ def eliminar_rutina(current_user, rutina_id):
     cursor = conn.cursor()
     try:
         # Verificar que la rutina exista y pertenezca al usuario
-        cursor.execute("SELECT * FROM Rutinas WHERE id = ? AND Usuario_id = ?", (rutina_id, current_user))
+        cursor.execute("SELECT * FROM Rutinas WHERE id = %s AND Usuario_id = %s", (rutina_id, current_user))
         if not cursor.fetchone():
             return jsonify({"error": "Rutina no encontrada o no autorizada"}), 404
 
-        cursor.execute("DELETE FROM Rutinas WHERE id = ? AND Usuario_id = ?", (rutina_id, current_user))
+        cursor.execute("DELETE FROM Rutinas WHERE id = %s AND Usuario_id = %s", (rutina_id, current_user))
         conn.commit()
         return jsonify({"mensaje": "Rutina eliminada correctamente"}), 200
     except Exception as e:
@@ -216,7 +216,7 @@ def get_ejercicios_por_grupo():
         cursor.execute("""
             SELECT id, Subgrupo_muscular, Nombre_ejercicio, imagen_url
             FROM Ejercicios
-            WHERE Grupo_muscular = ?
+            WHERE Grupo_muscular = %s
         """, (grupo,))
 
         ejercicios = cursor.fetchall()

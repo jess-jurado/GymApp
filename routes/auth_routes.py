@@ -29,7 +29,7 @@ def register():
     cursor = conn.cursor()
     
     # Verificar si el email ya existe
-    cursor.execute("SELECT * FROM Usuarios WHERE Email = ?", (email,))
+    cursor.execute("SELECT * FROM Usuarios WHERE Email = %s", (email,))
     existing_user = cursor.fetchone()
 
     if existing_user:
@@ -155,7 +155,7 @@ def login():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT Id, Password_hash FROM Usuarios WHERE Email = ?", (email,))
+    cursor.execute("SELECT Id, Password_hash FROM Usuarios WHERE Email = %s", (email,))
     user = cursor.fetchone()
 
     if not user:

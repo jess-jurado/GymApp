@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: gymapp-flask
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: gymapp-db
+          property: host
+      - key: DB_NAME
+        fromDatabase:
+          name: gymapp-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: gymapp-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: gymapp-db
+          property: password
+      - key: DB_PORT
+        fromDatabase:
+          name: gymapp-db
+          property: port
+      - key: SECRET_KEY
+        generateValue: true

@@ -14,7 +14,7 @@ import cloudinary.api
 from routes.rutina_routes import buscar_imagen_en_cloudinary
 from datetime import datetime
 import locale
-
+import bcrypt
 
 import pyodbc
 
@@ -38,6 +38,28 @@ def index():
     return render_template("index.html")
 
 # Ruta para la página de registro
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     if request.method == 'POST':
+#         nombre = request.form['nombre']
+#         email = request.form['email']
+#         password = request.form['password']
+
+#         cursor.execute("SELECT * FROM Usuarios WHERE Email = %s", (email,))
+#         existing_user = cursor.fetchone()
+#         if existing_user:
+#             flash("El correo ya está registrado. Usa otro o inicia sesión.", "error")
+#             return redirect(url_for('register'))
+
+#         hashed_password = generate_password_hash(password)
+#         cursor.execute("INSERT INTO Usuarios (Nombre, Email, Password_hash) VALUES (%s, %s, %s)", (nombre, email, hashed_password))
+#         conn.commit()
+
+#         flash("Registro exitoso. Ahora puedes iniciar sesión.", "success")
+#         return redirect(url_for('login'))
+
+#     return render_template("register.html")
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -45,14 +67,22 @@ def register():
         email = request.form['email']
         password = request.form['password']
 
-        cursor.execute("SELECT * FROM Usuarios WHERE Email = ?", (email,))
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar si el email ya existe (CON %s)
+        cursor.execute("SELECT * FROM Usuarios WHERE Email = %s", (email,))
         existing_user = cursor.fetchone()
         if existing_user:
             flash("El correo ya está registrado. Usa otro o inicia sesión.", "error")
             return redirect(url_for('register'))
 
-        hashed_password = generate_password_hash(password)
-        cursor.execute("INSERT INTO Usuarios (Nombre, Email, Password_hash) VALUES (?, ?, ?)", (nombre, email, hashed_password))
+        # USAR bcrypt EN LUGAR DE generate_password_hash
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        # Insertar usuario (CON %s)
+        cursor.execute("INSERT INTO Usuarios (Nombre, Email, Password_hash) VALUES (%s, %s, %s)", 
+                      (nombre, email, hashed_password))
         conn.commit()
 
         flash("Registro exitoso. Ahora puedes iniciar sesión.", "success")
@@ -60,25 +90,47 @@ def register():
 
     return render_template("register.html")
 
-
-
 # Ruta para la página de login
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'POST':
+#         email = request.form['email']
+#         password = request.form['password']
+
+#         cursor.execute("SELECT Id, Password_hash FROM Usuarios WHERE Email = %s", (email,))
+#         user = cursor.fetchone()
+
+#         if user and check_password_hash(user[1], password):  # user[1] es la contraseña hasheada
+#             session['user_id'] = user[0]
+#             flash("Inicio de sesión exitoso.", "success")
+#             return redirect(url_for('dashboard'))
+#         else:
+#             flash("Correo o contraseña incorrectos.", "error")
+#             return redirect(url_for('login'))  # Recarga login.html con el mensaje flash
+
+#     return render_template("login.html")
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        cursor.execute("SELECT Id, Password_hash FROM Usuarios WHERE Email = ?", (email,))
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Buscar usuario (CON %s)
+        cursor.execute("SELECT Id, Password_hash FROM Usuarios WHERE Email = %s", (email,))
         user = cursor.fetchone()
 
-        if user and check_password_hash(user[1], password):  # user[1] es la contraseña hasheada
+        # USAR bcrypt EN LUGAR DE check_password_hash
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):
             session['user_id'] = user[0]
             flash("Inicio de sesión exitoso.", "success")
             return redirect(url_for('dashboard'))
         else:
             flash("Correo o contraseña incorrectos.", "error")
-            return redirect(url_for('login'))  # Recarga login.html con el mensaje flash
+            return redirect(url_for('login'))
 
     return render_template("login.html")
 # # # Ruta para la página de inicio (después de login)
@@ -102,7 +154,7 @@ def get_subgrupos():
     # Conectar a la base de datos y hacer la consulta
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT Subgrupo_muscular FROM Ejercicios WHERE Grupo_muscular = ?", (grupo,))
+    cursor.execute("SELECT DISTINCT Subgrupo_muscular FROM Ejercicios WHERE Grupo_muscular = %s", (grupo,))
     subgrupos = cursor.fetchall()
     conn.close()
     
@@ -122,7 +174,7 @@ def get_ejercicios():
     query = """
         SELECT id, Nombre_ejercicio, imagen_url, Subgrupo_muscular
         FROM Ejercicios
-        WHERE Grupo_muscular = ? AND Subgrupo_muscular = ?
+        WHERE Grupo_muscular = %s AND Subgrupo_muscular = %s
     """
     cursor.execute(query, (grupo, subgrupo))
 
@@ -179,7 +231,7 @@ def dashboard():
     cursor = conn.cursor()
 
     # Obtener rutinas únicas con su ID
-    cursor.execute("SELECT id, Nombre_rutina FROM Rutinas WHERE Usuario_id = ?", (user_id,))
+    cursor.execute("SELECT id, Nombre_rutina FROM Rutinas WHERE Usuario_id = %s", (user_id,))
     rows = cursor.fetchall()
 
     nombres_unicos = set()
@@ -204,7 +256,7 @@ def detalle_rutina(id):
     cursor = conn.cursor()
 
     # Obtener los detalles de la rutina
-    query_rutina = "SELECT id, Nombre_rutina, Usuario_id FROM Rutinas WHERE id = ?"
+    query_rutina = "SELECT id, Nombre_rutina, Usuario_id FROM Rutinas WHERE id = %s"
     cursor.execute(query_rutina, (id,))
     rutina = cursor.fetchone()
 
@@ -221,7 +273,7 @@ def detalle_rutina(id):
         SELECT r.Dia, e.id, e.Nombre_ejercicio, e.Subgrupo_muscular
         FROM Rutinas r
         INNER JOIN Ejercicios e ON r.Id_ejercicio = e.id
-        WHERE r.Nombre_rutina = ? AND r.Usuario_id = ?
+        WHERE r.Nombre_rutina = %s AND r.Usuario_id = %s
     """
     cursor.execute(query_ejercicios, (nombre_rutina, usuario_id))
     ejercicios = cursor.fetchall()
@@ -264,8 +316,8 @@ def detalle_ejercicio(rutina_id, ejercicio_id):
         SELECT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, e.imagen_url
         FROM Ejercicios e
         JOIN Rutinas r ON e.id = r.Id_ejercicio
-        WHERE r.Nombre_rutina = (SELECT Nombre_rutina FROM Rutinas WHERE id = ?) 
-        AND e.id = ?
+        WHERE r.Nombre_rutina = (SELECT Nombre_rutina FROM Rutinas WHERE id = %s) 
+        AND e.id = %s
     """
     cursor.execute(query_ejercicio, (rutina_id, ejercicio_id))
     ejercicio = cursor.fetchone()
@@ -318,7 +370,7 @@ def guardar_series(ejercicio_id):
         
         cursor.execute("""
             INSERT INTO Historial (Id_ejercicio, Series, Repeticiones, Peso, Fecha, Usuario_id)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (ejercicio_id, serie['serie'], repeticiones, peso, fecha_actual, user_id))
 
     conn.commit()
@@ -336,7 +388,7 @@ def obtener_fechas_entrenamiento():
     cursor = conn.cursor()
 
     # Filtrar por Usuario_id para obtener solo sus entrenamientos
-    query = "SELECT DISTINCT Fecha FROM Historial WHERE Usuario_id = ? ORDER BY Fecha ASC"
+    query = "SELECT DISTINCT Fecha FROM Historial WHERE Usuario_id = %s ORDER BY Fecha ASC"
     cursor.execute(query, (user_id,))
     
     # Obtener los resultados y convertirlos a una lista
@@ -360,7 +412,7 @@ def obtener_series(ejercicio_id, fecha):
     query = """
         SELECT Series, Repeticiones, Peso
         FROM Historial
-        WHERE Id_ejercicio = ? AND Fecha LIKE ? AND Usuario_id = ?
+        WHERE Id_ejercicio = %s AND Fecha LIKE %s AND Usuario_id = %s
         ORDER BY Series ASC
     """
     cursor.execute(query, (ejercicio_id, f"{fecha}%", user_id))
@@ -391,7 +443,7 @@ def entrenamientos_realizados(fecha):
         SELECT DISTINCT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, e.Grupo_muscular, e.imagen_url
         FROM Historial h
         JOIN Ejercicios e ON h.Id_ejercicio = e.id
-        WHERE h.Fecha LIKE ? AND h.Usuario_id = ?
+        WHERE h.Fecha LIKE %s AND h.Usuario_id = %s
     """
     cursor.execute(query, (f"{fecha}%", user_id))
 
