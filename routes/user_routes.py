@@ -24,7 +24,7 @@ def token_required(f):
 def profile(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT Nombre, Email FROM Usuarios WHERE Id = %s", (current_user,))
+    cursor.execute("SELECT Nombre, Email FROM Usuarios WHERE Id = ?", (current_user,))
     user = cursor.fetchone()
     cursor.close()
     conn.close()

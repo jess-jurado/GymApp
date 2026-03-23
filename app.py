@@ -8,15 +8,11 @@ from config import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.workout_model import Workout
 from flask import session
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-from routes.rutina_routes import buscar_imagen_en_cloudinary
 from datetime import datetime
 import locale
 import bcrypt
-
-import pyodbc
+import os
+from flask import send_from_directory
 
 app = Flask(__name__)
 app.secret_key = "supersecreto"
@@ -25,12 +21,21 @@ app.secret_key = "supersecreto"
 conn = get_db_connection()
 cursor = conn.cursor()
 
-# Configuración de Cloudinary
-cloudinary.config(
-    cloud_name='dntqaxsko',
-    api_key='323523837582744',
-    api_secret='ES85Ti4VrGNKOJ07wiBLBRFE8u8'
-)
+def buscar_imagen_local(prefijo):
+    if not prefijo:
+        return None
+    base_dir = os.path.join(os.path.dirname(__file__), 'Assets_gymApp', 'Imagenes')
+    for root, dirs, files in os.walk(base_dir):
+        for file in files:
+            if file.lower().startswith(prefijo.lower()) and file.split('.')[-1].lower() in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
+                rel_path = os.path.relpath(os.path.join(root, file), base_dir)
+                rel_path = rel_path.replace('\\', '/')
+                return url_for('serve_image', filename=rel_path)
+    return None
+
+@app.route('/imagenes/<path:filename>')
+def serve_image(filename):
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'Assets_gymApp', 'Imagenes'), filename)
 
 # Ruta de la raíz
 @app.route('/')
@@ -70,8 +75,8 @@ def register():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Verificar si el email ya existe (CON %s)
-        cursor.execute("SELECT * FROM Usuarios WHERE Email = %s", (email,))
+        # Verificar si el email ya existe (CON ?)
+        cursor.execute("SELECT * FROM Usuarios WHERE Email = ?", (email,))
         existing_user = cursor.fetchone()
         if existing_user:
             flash("El correo ya está registrado. Usa otro o inicia sesión.", "error")
@@ -80,8 +85,8 @@ def register():
         # USAR bcrypt EN LUGAR DE generate_password_hash
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Insertar usuario (CON %s)
-        cursor.execute("INSERT INTO Usuarios (Nombre, Email, Password_hash) VALUES (%s, %s, %s)", 
+        # Insertar usuario (CON ?)
+        cursor.execute("INSERT INTO Usuarios (Nombre, Email, Password_hash) VALUES (?, ?, ?)", 
                       (nombre, email, hashed_password))
         conn.commit()
 
@@ -119,8 +124,8 @@ def login():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Buscar usuario (CON %s)
-        cursor.execute("SELECT Id, Password_hash FROM Usuarios WHERE Email = %s", (email,))
+        # Buscar usuario (CON ?)
+        cursor.execute("SELECT Id, Password_hash FROM Usuarios WHERE Email = ?", (email,))
         user = cursor.fetchone()
 
         # USAR bcrypt EN LUGAR DE check_password_hash
@@ -154,7 +159,7 @@ def get_subgrupos():
     # Conectar a la base de datos y hacer la consulta
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT Subgrupo_muscular FROM Ejercicios WHERE Grupo_muscular = %s", (grupo,))
+    cursor.execute("SELECT DISTINCT Subgrupo_muscular FROM Ejercicios WHERE Grupo_muscular = ?", (grupo,))
     subgrupos = cursor.fetchall()
     conn.close()
     
@@ -174,7 +179,7 @@ def get_ejercicios():
     query = """
         SELECT id, Nombre_ejercicio, imagen_url, Subgrupo_muscular
         FROM Ejercicios
-        WHERE Grupo_muscular = %s AND Subgrupo_muscular = %s
+        WHERE Grupo_muscular = ? AND Subgrupo_muscular = ?
     """
     cursor.execute(query, (grupo, subgrupo))
 
@@ -184,11 +189,9 @@ def get_ejercicios():
     # Convertir los resultados a un diccionario y construir la URL de la imagen
     ejercicios = []
     for row in rows:
-        # Aquí suponemos que row[2] contiene el identificador de la imagen en Cloudinary o Drive
-        # Por ejemplo, si usas Drive:
+        # Aquí suponemos que row[2] contiene el identificador de la imagen
         prefijo_imagen = row[2]
-        imagen_url = buscar_imagen_en_cloudinary(prefijo_imagen) 
-        # Si usas Cloudinary y ya tienes una función para buscar la imagen, puedes usarla en lugar de la URL de Drive.
+        imagen_url = buscar_imagen_local(prefijo_imagen) 
         
         ejercicio = {
             'id': row[0],
@@ -207,17 +210,14 @@ def get_ejercicios():
 
 # Asumiendo que ya tienes una conexión a la base de datos
 def obtener_rutinas():
-    conn = pyodbc.connect('DRIVER={SQL Server};'
-                          'SERVER=localhost;'
-                          'DATABASE=GymDB;'
-                          'UID=usuario;'
-                          'PWD=contraseña')
-
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT rutina_id, nombre_rutina FROM rutinas
+        SELECT id, Nombre_rutina FROM Rutinas
     """)
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
 
 
 @app.route('/dashboard')
@@ -231,7 +231,7 @@ def dashboard():
     cursor = conn.cursor()
 
     # Obtener rutinas únicas con su ID
-    cursor.execute("SELECT id, Nombre_rutina FROM Rutinas WHERE Usuario_id = %s", (user_id,))
+    cursor.execute("SELECT id, Nombre_rutina FROM Rutinas WHERE Usuario_id = ?", (user_id,))
     rows = cursor.fetchall()
 
     nombres_unicos = set()
@@ -256,7 +256,7 @@ def detalle_rutina(id):
     cursor = conn.cursor()
 
     # Obtener los detalles de la rutina
-    query_rutina = "SELECT id, Nombre_rutina, Usuario_id FROM Rutinas WHERE id = %s"
+    query_rutina = "SELECT id, Nombre_rutina, Usuario_id FROM Rutinas WHERE id = ?"
     cursor.execute(query_rutina, (id,))
     rutina = cursor.fetchone()
 
@@ -273,7 +273,7 @@ def detalle_rutina(id):
         SELECT r.Dia, e.id, e.Nombre_ejercicio, e.Subgrupo_muscular
         FROM Rutinas r
         INNER JOIN Ejercicios e ON r.Id_ejercicio = e.id
-        WHERE r.Nombre_rutina = %s AND r.Usuario_id = %s
+        WHERE r.Nombre_rutina = ? AND r.Usuario_id = ?
     """
     cursor.execute(query_ejercicios, (nombre_rutina, usuario_id))
     ejercicios = cursor.fetchall()
@@ -316,8 +316,8 @@ def detalle_ejercicio(rutina_id, ejercicio_id):
         SELECT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, e.imagen_url
         FROM Ejercicios e
         JOIN Rutinas r ON e.id = r.Id_ejercicio
-        WHERE r.Nombre_rutina = (SELECT Nombre_rutina FROM Rutinas WHERE id = %s) 
-        AND e.id = %s
+        WHERE r.Nombre_rutina = (SELECT Nombre_rutina FROM Rutinas WHERE id = ?) 
+        AND e.id = ?
     """
     cursor.execute(query_ejercicio, (rutina_id, ejercicio_id))
     ejercicio = cursor.fetchone()
@@ -332,7 +332,7 @@ def detalle_ejercicio(rutina_id, ejercicio_id):
     subgrupo_muscular = ejercicio[2]
     prefijo_imagen = ejercicio[3]
     
-    imagen_url_ = buscar_imagen_en_cloudinary(prefijo_imagen) if prefijo_imagen else None
+    imagen_url_ = buscar_imagen_local(prefijo_imagen) if prefijo_imagen else None
 
     cursor.close()
     conn.close()
@@ -370,7 +370,7 @@ def guardar_series(ejercicio_id):
         
         cursor.execute("""
             INSERT INTO Historial (Id_ejercicio, Series, Repeticiones, Peso, Fecha, Usuario_id)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?)
         """, (ejercicio_id, serie['serie'], repeticiones, peso, fecha_actual, user_id))
 
     conn.commit()
@@ -388,7 +388,7 @@ def obtener_fechas_entrenamiento():
     cursor = conn.cursor()
 
     # Filtrar por Usuario_id para obtener solo sus entrenamientos
-    query = "SELECT DISTINCT Fecha FROM Historial WHERE Usuario_id = %s ORDER BY Fecha ASC"
+    query = "SELECT DISTINCT Fecha FROM Historial WHERE Usuario_id = ? ORDER BY Fecha ASC"
     cursor.execute(query, (user_id,))
     
     # Obtener los resultados y convertirlos a una lista
@@ -412,7 +412,7 @@ def obtener_series(ejercicio_id, fecha):
     query = """
         SELECT Series, Repeticiones, Peso
         FROM Historial
-        WHERE Id_ejercicio = %s AND Fecha LIKE %s AND Usuario_id = %s
+        WHERE Id_ejercicio = ? AND Fecha LIKE ? AND Usuario_id = ?
         ORDER BY Series ASC
     """
     cursor.execute(query, (ejercicio_id, f"{fecha}%", user_id))
@@ -443,12 +443,12 @@ def entrenamientos_realizados(fecha):
         SELECT DISTINCT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, e.Grupo_muscular, e.imagen_url
         FROM Historial h
         JOIN Ejercicios e ON h.Id_ejercicio = e.id
-        WHERE h.Fecha LIKE %s AND h.Usuario_id = %s
+        WHERE h.Fecha LIKE ? AND h.Usuario_id = ?
     """
     cursor.execute(query, (f"{fecha}%", user_id))
 
     ejercicios = [
-        {"id": row[0], "nombre": row[1], "subgrupo": row[2], "grupo": row[3], "imagen": buscar_imagen_en_cloudinary(row[4])} 
+        {"id": row[0], "nombre": row[1], "subgrupo": row[2], "grupo": row[3], "imagen": buscar_imagen_local(row[4])} 
         for row in cursor.fetchall()
     ]
 
@@ -466,4 +466,4 @@ app.register_blueprint(entrenamientos_bp, url_prefix='/api')
 app.register_blueprint(rutinas_bp, url_prefix='/api')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
