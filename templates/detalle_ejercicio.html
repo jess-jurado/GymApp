@@ -1,113 +1,160 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Detalle del Ejercicio</title>
-  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style_detalle_ejercicio.css') }}">
-</head>
-<body>
-  <div class="ejercicio-container">
-    <h1 id="ejercicio-nombre">Nombre del Ejercicio: {{ nombre_ejercicio }}</h1>
-    <h2 id="ejercicio-subgrupo">Subgrupo Muscular: {{ subgrupo_muscular }}</h2>
-    
-    <!-- Imagen del ejercicio -->
-    {% if imagen_url %}
-      <div class="ejercicio-imagen">
-        <img src="{{ imagen_url }}" alt="Imagen del ejercicio" class="img-responsive">
-      </div>
-    {% else %}
-      <p>No hay imagen disponible.</p>
-    {% endif %}
+{% extends "base.html" %}
 
-    <form id="detalle-ejercicio-form">
-      <div class="input-group">
-        <label for="series">Número de Series:</label>
-        <input type="number" id="series" name="series" placeholder="Ej: 3" min="1" required oninput="generarSeries()">
-      </div>
+{% block title %}{{ nombre_ejercicio }} - GymBRoot{% endblock %}
 
-      <div id="series-container">
-        <!-- Aquí se agregarán dinámicamente los campos de repeticiones y peso -->
-      </div>
+{% block extra_css %}
+<style>
+    .ejercicio-image-container {
+        width: 100%;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        margin-bottom: 24px;
+        background: #000;
+        border: 1px solid #334155;
+    }
+    .ejercicio-image-container img {
+        width: 100%;
+        display: block;
+        opacity: 0.9;
+    }
+    .serie-row {
+        background: var(--card-bg);
+        padding: 16px;
+        border-radius: var(--border-radius);
+        border: 1px solid #334155;
+        margin-bottom: 12px;
+    }
+    .input-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 8px;
+    }
+    .input-card {
+        background: #111827;
+        padding: 8px;
+        border-radius: 12px;
+    }
+    .input-card label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+    }
+    .input-card input {
+        margin-bottom: 0;
+        padding: 8px;
+        text-align: center;
+        border: none;
+        background: transparent;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
 
-      <div class="submit-btn">
-        <button type="submit" class="btn">Guardar Ejercicio</button>
-      </div>
-    </form>
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <a href="javascript:history.back()" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">← Volver</a>
+    <h1 style="margin-top: 12px;">{{ nombre_ejercicio }}</h1>
+    <p>{{ subgrupo_muscular }}</p>
+</div>
 
-    <button onclick="window.history.back()" class="btn">Volver</button>
-  </div>
+{% if imagen_url %}
+<div class="ejercicio-image-container">
+    <img src="{{ imagen_url }}" alt="{{ nombre_ejercicio }}">
+</div>
+{% endif %}
 
-  <script>
-     function generarSeries() {
+<form id="detalle-ejercicio-form">
+    <div class="card">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600;">¿Cuántas series vas a hacer?</label>
+        <input type="number" id="series" name="series" placeholder="Ej: 3" min="1" required oninput="generarSeries()" style="font-size: 1.2rem; text-align: center;">
+    </div>
+
+    <div id="series-container"></div>
+
+    <div style="margin-top: 24px;">
+        <button type="submit" class="btn btn-primary">Guardar Entrenamiento</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generarSeries() {
     const seriesContainer = document.getElementById("series-container");
     const numSeries = parseInt(document.getElementById("series").value) || 0;
     
-    seriesContainer.innerHTML = ""; // Limpiar contenido anterior
+    // Save current values to restore them
+    const currentValues = {};
+    const inputs = seriesContainer.querySelectorAll('input');
+    inputs.forEach(input => {
+        currentValues[input.id] = input.value;
+    });
+
+    seriesContainer.innerHTML = "";
 
     for (let i = 1; i <= numSeries; i++) {
-      const serieDiv = document.createElement("div");
-      serieDiv.classList.add("serie");
-
-      serieDiv.innerHTML = `
-        <h3>Serie ${i}</h3>
-        <div class="input-group">
-          <label for="repeticiones_${i}">Repeticiones:</label>
-          <input type="number" id="repeticiones_${i}" name="repeticiones_${i}" placeholder="Ej: 10" min="1" required>
-        </div>
-
-        <div class="input-group">
-          <label for="peso_${i}">Peso (kg):</label>
-          <input type="number" id="peso_${i}" name="peso_${i}" placeholder="Ej: 20" min="0" step="0.1" required>
-        </div>
-      `;
-
-      seriesContainer.appendChild(serieDiv);
+        const serieRow = document.createElement("div");
+        serieRow.classList.add("serie-row");
+        
+        serieRow.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 700; color: var(--accent-color);">SERIE ${i}</span>
+            </div>
+            <div class="input-row">
+                <div class="input-card">
+                    <label>Reps</label>
+                    <input type="number" id="repeticiones_${i}" placeholder="0" min="1" required>
+                </div>
+                <div class="input-card">
+                    <label>Peso (kg)</label>
+                    <input type="number" id="peso_${i}" placeholder="0" min="0" step="0.5" required>
+                </div>
+            </div>
+        `;
+        seriesContainer.appendChild(serieRow);
+        
+        // Restore values if they existed
+        if (currentValues[`repeticiones_${i}`]) {
+            document.getElementById(`repeticiones_${i}`).value = currentValues[`repeticiones_${i}`];
+        }
+        if (currentValues[`peso_${i}`]) {
+            document.getElementById(`peso_${i}`).value = currentValues[`peso_${i}`];
+        }
     }
-  }
+}
 
-  document.getElementById('detalle-ejercicio-form').addEventListener('submit', function(e) {
+document.getElementById('detalle-ejercicio-form').addEventListener('submit', function(e) {
     e.preventDefault();
-
     const numSeries = parseInt(document.getElementById("series").value);
-    const ejercicioId = "{{ ejercicio_id }}";  // Verifica que Flask lo está enviando
-
-    if (!ejercicioId) {
-      alert("Error: No se encontró el ID del ejercicio.");
-      return;
-    }
-
+    const ejercicioId = "{{ ejercicio_id }}";
     let datosEjercicio = [];
 
     for (let i = 1; i <= numSeries; i++) {
-      const repeticiones = document.getElementById(`repeticiones_${i}`).value;
-      const peso = document.getElementById(`peso_${i}`).value;
-
-      if (!repeticiones || !peso) {
-        alert(`Por favor, completa todos los datos de la serie ${i}.`);
-        return;
-      }
-
-      datosEjercicio.push({ serie: i, repeticiones: repeticiones, peso: peso });
+        const rep = document.getElementById(`repeticiones_${i}`).value;
+        const peso = document.getElementById(`peso_${i}`).value;
+        if (!rep || !peso) return alert(`Completa la serie ${i}`);
+        datosEjercicio.push({ serie: i, repeticiones: rep, peso: peso });
     }
 
     fetch(`/guardar_series/${ejercicioId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ series: datosEjercicio })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ series: datosEjercicio })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
-      if (data.error) {
-        alert("Error: " + data.error);
-      } else {
-        alert(data.message);
-        window.history.back();  // Volver a la página anterior tras guardar
-      }
-    })
-    .catch(error => console.error("Error al guardar:", error));
+        if (data.error) alert(data.error);
+        else {
+            alert("¡Entrenamiento guardado!");
+            window.history.back();
+        }
+    });
 });
 
+// Load existing data if coming from history
 document.addEventListener("DOMContentLoaded", function () {
     const urlParams = new URLSearchParams(window.location.search);
     const fecha = urlParams.get("fecha");
@@ -115,24 +162,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (fecha && ejercicioId) {
         fetch(`/api/obtener_series/${ejercicioId}/${fecha}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.error) {
-                    console.log("No hay series registradas en esta fecha.");
-                    return;
+                if (data.series) {
+                    document.getElementById("series").value = data.series.length;
+                    generarSeries();
+                    data.series.forEach(s => {
+                        document.getElementById(`repeticiones_${s.serie}`).value = s.repeticiones;
+                        document.getElementById(`peso_${s.serie}`).value = s.peso;
+                    });
                 }
-
-                document.getElementById("series").value = data.series.length;
-                generarSeries(); // Generar los campos antes de rellenarlos
-
-                data.series.forEach(serie => {
-                    document.getElementById(`repeticiones_${serie.serie}`).value = serie.repeticiones;
-                    document.getElementById(`peso_${serie.serie}`).value = serie.peso;
-                });
-            })
-            .catch(error => console.error("Error al obtener series:", error));
+            });
     }
 });
-  </script>
-</body>
-</html>
+</script>
+{% endblock %}

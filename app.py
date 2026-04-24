@@ -42,6 +42,14 @@ def serve_image(filename):
 def index():
     return render_template("index.html")
 
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/sw.js')
+def service_worker():
+    return send_from_directory('static', 'sw.js')
+
 # Ruta para la página de registro
 # @app.route('/register', methods=['GET', 'POST'])
 # def register():
@@ -466,4 +474,4 @@ app.register_blueprint(entrenamientos_bp, url_prefix='/api')
 app.register_blueprint(rutinas_bp, url_prefix='/api')
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(host='0.0.0.0', debug=True, port=5001)

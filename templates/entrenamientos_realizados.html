@@ -1,160 +1,125 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrenamientos Realizados - {{ fecha }}</title>
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_entrenamientos_realizados.css') }}">
-</head>
-<body>
-    <header>
-        <h1>Entrenamientos del Día - {{ fecha }}</h1>
-    </header>
-    
-    <div class="dashboard-container">
-        <h2 class="dashboard-title">Entrenamientos del Día</h2>
-        <p class="dashboard-subtitle">Selecciona un grupo muscular</p>
-        
-        <div class="ejercicios-list" id="grupo-muscular-container">
-            <!-- Aquí se insertarán dinámicamente los grupos musculares -->
+{% extends "base.html" %}
+
+{% block title %}Entrenamientos del {{ fecha }} - GymBRoot{% endblock %}
+
+{% block extra_css %}
+<style>
+    .grupo-title {
+        color: var(--accent-color);
+        margin-top: 24px;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .series-list {
+        list-style: none;
+        margin-top: 12px;
+    }
+    .serie-item {
+        display: flex;
+        justify-content: space-between;
+        background: #111827;
+        padding: 8px 16px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        font-size: 0.9rem;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 1000;
+        padding: 20px;
+    }
+    .modal-content {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        max-width: 500px;
+        margin: 40px auto;
+        position: relative;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <a href="javascript:history.back()" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">← Volver</a>
+    <h1 style="margin-top: 12px;">Entrenamientos</h1>
+    <p>{{ fecha }}</p>
+</div>
+
+<div id="entrenamientos-container">
+    {% if ejercicios %}
+        {% set current_group = namespace(name='') %}
+        {% for ejercicio in ejercicios %}
+            {% if current_group.name != ejercicio.grupo %}
+                <h3 class="grupo-title">{{ ejercicio.grupo }}</h3>
+                {% set current_group.name = ejercicio.grupo %}
+            {% endif %}
+            
+            <div class="card" onclick="mostrarDetalle('{{ ejercicio.id }}', '{{ ejercicio.nombre }}', '{{ ejercicio.imagen }}')" style="cursor: pointer; margin-top: 12px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    {% if ejercicio.imagen %}
+                        <img src="{{ ejercicio.imagen }}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
+                    {% endif %}
+                    <div>
+                        <h4 style="margin-bottom: 4px;">{{ ejercicio.nombre }}</h4>
+                        <p style="font-size: 0.8rem;">Ver series realizadas</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card" style="text-align: center;">
+            <p>No hay registros para este día.</p>
         </div>
+    {% endif %}
+</div>
+
+<!-- Modal para detalles -->
+<div id="detalleModal" class="modal" onclick="cerrarModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h2 id="modalNombre"></h2>
+        <div id="modalImagenContainer" style="margin: 16px 0;"></div>
+        <div id="modalSeries" class="series-list"></div>
+        <button class="btn btn-secondary" onclick="cerrarModal()" style="margin-top: 20px;">Cerrar</button>
     </div>
-    
-    <script type="application/json" id="data-entrenamientos">
-        {{ ejercicios | tojson }}
-    </script>
-    
-    <script>
-        // Función para generar un color aleatorio en formato hexadecimal
-        function obtenerColorAleatorio() {
-            const letras = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letras[Math.floor(Math.random() * 16)];
-            }
-            return color;
-        }
+</div>
+{% endblock %}
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const entrenamientos = JSON.parse(document.getElementById("data-entrenamientos").textContent);
-            const container = document.getElementById("grupo-muscular-container");
-            
-            if (entrenamientos.length === 0) {
-                container.innerHTML = "<p>No hay entrenamientos registrados para esta fecha.</p>";
-                return;
+{% block extra_js %}
+<script>
+function mostrarDetalle(id, nombre, imagen) {
+    const modal = document.getElementById('detalleModal');
+    const modalNombre = document.getElementById('modalNombre');
+    const modalImagen = document.getElementById('modalImagenContainer');
+    const modalSeries = document.getElementById('modalSeries');
+
+    modalNombre.innerText = nombre;
+    modalImagen.innerHTML = imagen ? `<img src="${imagen}" style="width:100%; border-radius:12px;">` : '';
+    modalSeries.innerHTML = 'Cargando series...';
+    modal.style.display = 'block';
+
+    fetch(`/api/obtener_series/${id}/{{ fecha }}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.series) {
+                modalSeries.innerHTML = data.series.map(s => `
+                    <div class="serie-item">
+                        <span>SERIE ${s.serie}</span>
+                        <span><strong>${s.repeticiones}</strong> repre / <strong>${s.peso}</strong> kg</span>
+                    </div>
+                `).join('');
+            } else {
+                modalSeries.innerHTML = 'No se encontraron detalles.';
             }
-            
-            let estructura = {};
-            entrenamientos.forEach(ejercicio => {
-                let grupo = ejercicio["grupo"];
-                let subgrupo = ejercicio["subgrupo"];
-                let nombre = ejercicio["nombre"];
-                let id = ejercicio["id"];
-                let imagen = ejercicio["imagen"];
-                
-                if (!estructura[grupo]) {
-                    estructura[grupo] = {};
-                }
-                if (!estructura[grupo][subgrupo]) {
-                    estructura[grupo][subgrupo] = [];
-                }
-                estructura[grupo][subgrupo].push({ id, nombre, imagen });
-            });
-            
-            Object.keys(estructura).forEach(grupo => {
-                let grupoContainer = document.createElement("div");
-                grupoContainer.classList.add("grupo-container");
-                
-                let tituloGrupo = document.createElement("button");
-                tituloGrupo.textContent = grupo;
-                tituloGrupo.classList.add("ejercicio-btn");
-                tituloGrupo.style.backgroundColor = obtenerColorAleatorio(); // Color aleatorio para el grupo
-                tituloGrupo.style.color = "white"; // Asegura que el texto sea legible
-                tituloGrupo.style.cursor = "pointer";
-                tituloGrupo.onclick = () => toggleSubgrupo(subgruposContainer);
-                grupoContainer.appendChild(tituloGrupo);
-                
-                let subgruposContainer = document.createElement("div");
-                subgruposContainer.classList.add("subgrupos-container");
-                subgruposContainer.style.display = "none";
-                
-                Object.keys(estructura[grupo]).forEach(subgrupo => {
-                    let subgrupoContainer = document.createElement("div");
-                    subgrupoContainer.classList.add("subgrupo-container");
-                    
-                    let tituloSubgrupo = document.createElement("button");
-                    tituloSubgrupo.textContent = subgrupo;
-                    tituloSubgrupo.classList.add("ejercicio-btn");
-                    tituloSubgrupo.style.backgroundColor = obtenerColorAleatorio(); // Color aleatorio para el grupo
-                    tituloSubgrupo.style.color = "white"; // Asegura que el texto sea legible
-                    tituloSubgrupo.style.cursor = "pointer";
-                    tituloSubgrupo.onclick = () => toggleEjercicios(ejerciciosContainer);
-                    subgrupoContainer.appendChild(tituloSubgrupo);
-                    
-                    let ejerciciosContainer = document.createElement("div");
-                    ejerciciosContainer.classList.add("ejercicios-container");
-                    ejerciciosContainer.style.display = "none";
-                    
-                    estructura[grupo][subgrupo].forEach(ejercicio => {
-                        let btn = document.createElement("button");
-                        btn.textContent = ejercicio.nombre;
-                        btn.classList.add("ejercicio-btn");
-                        btn.classList.add("ejercicio-view-btn");
-                        btn.style.backgroundColor = obtenerColorAleatorio(); // Color aleatorio para el ejercicio
-                        btn.style.color = "white"; // Asegura que el texto sea legible
-                        btn.onclick = () => mostrarEjercicio(ejercicio.id, ejercicio.nombre, ejercicio.imagen);
-                        ejerciciosContainer.appendChild(btn);
-                    });
-                    
-                    subgrupoContainer.appendChild(ejerciciosContainer);
-                    subgruposContainer.appendChild(subgrupoContainer);
-                });
-                
-                grupoContainer.appendChild(subgruposContainer);
-                container.appendChild(grupoContainer);
-            });
         });
-        
-        function toggleSubgrupo(container) {
-            container.style.display = container.style.display === "none" ? "block" : "none";
-        }
-        
-        function toggleEjercicios(container) {
-            container.style.display = container.style.display === "none" ? "block" : "none";
-        }
-        
-        function mostrarEjercicio(idEjercicio, nombreEjercicio, imagenEjercicio) {
-            fetch(`/api/obtener_series/${idEjercicio}/{{ fecha }}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        return;
-                    }
+}
 
-                    let dashboardContainer = document.querySelector(".dashboard-container");
-                    let detalleContainer = document.getElementById("detalle-ejercicio");
-
-                    if (!detalleContainer) {
-                        detalleContainer = document.createElement("div");
-                        detalleContainer.id = "detalle-ejercicio";
-                        dashboardContainer.appendChild(detalleContainer);
-                    }
-                    
-                    let ejercicioHTML = `<h2>${nombreEjercicio}</h2>`;
-                    if (imagenEjercicio) {
-                        ejercicioHTML += `<img src="${imagenEjercicio}" alt="${nombreEjercicio}" style="max-width:300px;">`;
-                    }
-                    ejercicioHTML += `<ul>`;
-                    data.series.forEach(serie => {
-                        ejercicioHTML += `<li>Serie ${serie.serie}: ${serie.repeticiones} repeticiones - ${serie.peso} kg</li>`;
-                    });
-                    ejercicioHTML += `</ul>`;
-                    detalleContainer.innerHTML = ejercicioHTML;
-                })
-                .catch(error => console.error("Error al obtener los datos:", error));
-        }
-    </script>
-</body>
-</html>
+function cerrarModal() {
+    document.getElementById('detalleModal').style.display = 'none';
+}
+</script>
+{% endblock %}

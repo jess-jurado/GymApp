@@ -1,71 +1,113 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Detalles de la Rutina</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style_detalle_rutina.css') }}">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
-</head>
-<body>
-  <div class="dashboard-container">
-    <h1 class="dashboard-title">Detalles de la Rutina: {{ rutina.Nombre_rutina }}</h1>
+{% extends "base.html" %}
 
-    {% if ejercicios_por_dia %}
-      {% for dia, ejercicios in ejercicios_por_dia.items() %}
-      <div class="dia-container">
-        <h2 class="dia-title">{{ dia }}</h2> <!-- Título del día -->
+{% block title %}Detalles de la Rutina - GymBRoot{% endblock %}
 
-        <div class="ejercicios-list">
-          {% for ejercicio in ejercicios %}
-          <button class="ejercicio-btn" onclick="irADetalleEjercicio('{{ rutina.id }}', '{{ ejercicio.id }}')">
-            <strong>{{ ejercicio.Nombre_ejercicio }}</strong><br>
-            <em>{{ ejercicio.Subgrupo_muscular }}</em>
-          </button>
-          {% endfor %}
-        </div>
-      </div>
-      {% endfor %}
-    {% else %}
-      <p>No tienes ejercicios en esta rutina.</p>
-    {% endif %}
-
-    <button id="verEntrenamientos" class="btn">Entrenamientos Realizados</button>
-    <div id="calendario" style="display: none; margin-top: 20px;"></div>
-  </div>
-
-  <script>
-    function irADetalleEjercicio(rutinaId, ejercicioId) {
-    if (!rutinaId || !ejercicioId) {
-      console.error("ID de rutina o ejercicio no definido.");
-      return;
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+<style>
+    .dia-section { margin-bottom: 32px; }
+    .dia-header { 
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #334155;
     }
-    window.location.href = `/detalle_ejercicio/${rutinaId}/${ejercicioId}`;
-  }
+    .dia-badge {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+    .ejercicio-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        margin-bottom: 12px;
+        border: 1px solid #334155;
+        text-decoration: none;
+        color: white;
+    }
+    .fc { background: var(--card-bg); padding: 12px; border-radius: var(--border-radius); color: white; }
+    .fc-daygrid-day-number { color: white; }
+    .fc-col-header-cell-cushion { color: var(--text-secondary); }
+</style>
+{% endblock %}
 
-    // Generar colores aleatorios para los botones
-    document.addEventListener("DOMContentLoaded", function () {
-      const botones = document.querySelectorAll(".ejercicio-btn");
-      botones.forEach(boton => {
-        let randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
-        boton.style.backgroundColor = randomColor;
-      });
-    });
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <a href="/dashboard" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">← Volver al Dashboard</a>
+    <h1 style="margin-top: 12px;">{{ rutina.Nombre_rutina }}</h1>
+</div>
 
+{% if ejercicios_por_dia %}
+    {% for dia, ejercicios in ejercicios_por_dia.items() %}
+    <div class="dia-section">
+        <div class="dia-header">
+            <span class="dia-badge">{{ dia }}</span>
+        </div>
+
+        <div class="grid">
+            {% for ejercicio in ejercicios %}
+            <a href="/detalle_ejercicio/{{ rutina.id }}/{{ ejercicio.id }}" class="ejercicio-card">
+                <div>
+                    <h4 style="margin-bottom: 2px;">{{ ejercicio.Nombre_ejercicio }}</h4>
+                    <p style="font-size: 0.85rem;">{{ ejercicio.Subgrupo_muscular }}</p>
+                </div>
+                <div style="color: var(--accent-color);">▶</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card" style="text-align: center;">
+        <p>No hay ejercicios en esta rutina.</p>
+    </div>
+{% endif %}
+
+<div style="margin-top: 40px;">
+    <button id="verEntrenamientos" class="btn btn-secondary">Ver Historial de Entrenamientos</button>
+    <div id="calendario" style="display: none; margin-top: 20px;"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
     document.getElementById("verEntrenamientos").addEventListener("click", function() {
-      document.getElementById("calendario").style.display = "block";
+      const calDiv = document.getElementById("calendario");
+      if (calDiv.style.display === "block") {
+          calDiv.style.display = "none";
+          return;
+      }
+      
+      calDiv.style.display = "block";
       fetch("/api/obtener_fechas_entrenamiento")
         .then(response => response.json())
         .then(data => {
           let calendarEl = document.getElementById("calendario");
           let calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: "dayGridMonth",
+            locale: 'es',
+            headerToolbar: {
+                left: 'prev',
+                center: 'title',
+                right: 'next'
+            },
             events: data.fechas.map(fecha => ({
-              title: "Entrenamiento",
+              title: "💪",
               start: fecha,
-              backgroundColor: "#f39c12",
-              borderColor: "#e67e22",
-              classNames: ["evento-entrenamiento"]
+              backgroundColor: "transparent",
+              borderColor: "transparent",
+              textColor: "#38bdf8"
             })),
             dateClick: function(info) {
               if (data.fechas.includes(info.dateStr)) {
@@ -77,6 +119,5 @@
         })
         .catch(error => console.error("Error al cargar el calendario:", error));
     });
-  </script>
-</body>
-</html>
+</script>
+{% endblock %}

@@ -1,223 +1,229 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Crear Rutina - GymApp</title>
-  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style_crear_rutina.css') }}">
-</head>
-<body>
-  <div class="crear-rutina-container">
-    <h1>Crear Nueva Rutina</h1>
+{% extends "base.html" %}
 
-    <div>
-      <label for="nombre_rutina"><h3>Nombre de la Rutina:</h3></label>
-      <input type="text" id="nombre_rutina" required><br>
+{% block title %}Crear Rutina - GymBRoot{% endblock %}
+
+{% block extra_css %}
+<style>
+    .step-section { margin-bottom: 32px; display: none; }
+    .step-section.active { display: block; }
+    .button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .option-btn {
+        background: var(--card-bg);
+        border: 1px solid #334155;
+        color: white;
+        padding: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        text-align: center;
+    }
+    .option-btn.selected {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+    }
+    .exercise-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: #111827;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        border: 1px solid #334155;
+    }
+    .exercise-item.selected {
+        border-color: var(--accent-color);
+        background: rgba(56, 189, 248, 0.1);
+    }
+    .summary-day {
+        border-left: 2px solid var(--accent-color);
+        padding-left: 12px;
+        margin-bottom: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <h1>Nueva Rutina</h1>
+    <p>Sigue los pasos para configurar tu plan</p>
+</div>
+
+<div class="card">
+    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Nombre de la Rutina</label>
+    <input type="text" id="nombre_rutina" placeholder="Ej: Empuje / Tracción" required>
+</div>
+
+<!-- Step 1: Day -->
+<div id="step-day" class="step-section active">
+    <h3>1. Selecciona el Día</h3>
+    <div class="button-grid" style="margin-top: 12px;">
+        {% for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+            <button class="option-btn day-btn" data-day="{{ dia }}">{{ dia }}</button>
+        {% endfor %}
     </div>
+</div>
 
-    <h2>Selecciona el Día</h2>
-    <div id="days-container" class="button-group">
-      <button class="day-btn" data-day="Lunes">Lunes</button>
-      <button class="day-btn" data-day="Martes">Martes</button>
-      <button class="day-btn" data-day="Miércoles">Miércoles</button>
-      <button class="day-btn" data-day="Jueves">Jueves</button>
-      <button class="day-btn" data-day="Viernes">Viernes</button>
-      <button class="day-btn" data-day="Sábado">Sábado</button>
-      <button class="day-btn" data-day="Domingo">Domingo</button>
+<!-- Step 2: Group -->
+<div id="step-group" class="step-section">
+    <h3>2. Grupo Muscular</h3>
+    <div class="button-grid" style="margin-top: 12px;">
+        {% for grupo in ['Pecho', 'Espalda', 'Piernas', 'Biceps', 'Triceps', 'Abdominales'] %}
+            <button class="option-btn group-btn" data-group="{{ grupo }}">{{ grupo }}</button>
+        {% endfor %}
     </div>
+</div>
 
-    <h2>Selecciona Grupo Muscular</h2>
-    <div id="muscle-groups-container" class="button-group" style="display:none;">
-      <button class="group-btn" data-group="Piernas">Piernas</button>
-      <button class="group-btn" data-group="Abdominales">Abdominales</button>
-      <button class="group-btn" data-group="Biceps">Bíceps</button>
-      <button class="group-btn" data-group="Triceps">Tríceps</button>
-      <button class="group-btn" data-group="Espalda">Espalda</button>
-      <button class="group-btn" data-group="Pecho">Pecho</button>
-    </div>
+<!-- Step 3: Subgroup -->
+<div id="step-subgroup" class="step-section">
+    <h3>3. Subgrupo</h3>
+    <div id="subgroups-container" class="button-grid" style="margin-top: 12px;"></div>
+</div>
 
-    <h2 id="subgroup-heading" style="display:none;">Selecciona Subgrupo</h2>
-    <div id="subgroups-container" class="button-group" style="display:none;"></div>
+<!-- Step 4: Exercises -->
+<div id="step-exercises" class="step-section">
+    <h3>4. Ejercicios</h3>
+    <div id="exercises-container" style="margin-top: 12px;"></div>
+    <button id="add-to-day" class="btn btn-secondary" style="margin-top: 16px;">+ Añadir estos ejercicios</button>
+</div>
 
-    <h2 id="exercise-heading" style="display:none;">Ejercicios Disponibles</h2>
-    <div id="exercises-container"></div>
-
-    <button id="add-group">Agregar grupo a este día</button>
-
-    <hr>
-
-    <button id="submit-routine">Guardar Rutina</button>
-
+<!-- Final step -->
+<div id="step-summary" style="margin-top: 40px;">
     <h2>Resumen</h2>
-    <div id="summary-container"></div>
-  </div>
+    <div id="summary-container" style="margin-top: 12px;"></div>
+    <button id="submit-routine" class="btn btn-primary" style="margin-top: 24px; display: none;">Guardar Rutina Completa</button>
+</div>
 
-  <script>
-    let routineData = {};
-    let selectedDay = null;
-    let selectedGroup = null;
-    let selectedSubgroup = null;
-    let selectedExercises = [];
+{% endblock %}
 
-    function getRandomColor() {
-      const letters = '0123456789ABCDEF';
-      let color = '#';
-      for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-    }
+{% block extra_js %}
+<script>
+let routineData = {};
+let selectedDay, selectedGroup, selectedSubgroup, selectedExercises = [];
 
-    document.querySelectorAll('.day-btn').forEach(button => {
-      button.addEventListener('click', () => {
-        selectedDay = button.getAttribute('data-day');
-        document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('selected'));
-        button.classList.add('selected');
+// Navigation logic
+function showStep(stepId) {
+    document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+    window.scrollTo({ top: document.getElementById(stepId).offsetTop - 100, behavior: 'smooth' });
+}
 
-        if (!routineData[selectedDay]) {
-          routineData[selectedDay] = [];
-        }
+// Day Selection
+document.querySelectorAll('.day-btn').forEach(btn => {
+    btn.onclick = () => {
+        selectedDay = btn.dataset.day;
+        document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        if (!routineData[selectedDay]) routineData[selectedDay] = [];
+        showStep('step-group');
+    };
+});
 
-        document.getElementById('muscle-groups-container').style.display = 'block';
-      });
-    });
-
-    document.querySelectorAll('.group-btn').forEach(button => {
-      button.addEventListener('click', () => {
-        selectedGroup = button.getAttribute('data-group');
-        document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('selected'));
-        button.classList.add('selected');
-
-        selectedSubgroup = null;
-        selectedExercises = [];
-        document.getElementById('subgroups-container').innerHTML = "";
-        document.getElementById('exercises-container').innerHTML = "";
-
+// Group Selection
+document.querySelectorAll('.group-btn').forEach(btn => {
+    btn.onclick = () => {
+        selectedGroup = btn.dataset.group;
+        document.querySelectorAll('.group-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        
         fetch(`/get_subgrupos?grupo=${selectedGroup}`)
-          .then(response => response.json())
-          .then(data => {
-            const subgroupsContainer = document.getElementById('subgroups-container');
-            subgroupsContainer.innerHTML = "";
-            data.subgrupos.forEach(sub => {
-              const btn = document.createElement('button');
-              btn.className = 'subgroup-btn';
-              btn.textContent = sub;
-              btn.setAttribute('data-subgroup', sub);
-              btn.addEventListener('click', () => {
-                document.querySelectorAll('.subgroup-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedSubgroup = sub;
-                getExercises(selectedGroup, selectedSubgroup);
-              });
-              subgroupsContainer.appendChild(btn);
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('subgroups-container');
+                container.innerHTML = data.subgrupos.map(sub => `
+                    <button class="option-btn subgroup-btn" data-subgroup="${sub}">${sub}</button>
+                `).join('');
+                
+                container.querySelectorAll('.subgroup-btn').forEach(sb => {
+                    sb.onclick = () => {
+                        selectedSubgroup = sb.dataset.subgroup;
+                        document.querySelectorAll('.subgroup-btn').forEach(b => b.classList.remove('selected'));
+                        sb.classList.add('selected');
+                        loadExercises();
+                    };
+                });
+                showStep('step-subgroup');
             });
-            document.getElementById('subgroup-heading').style.display = 'block';
-            subgroupsContainer.style.display = 'block';
-          });
-      });
-    });
+    };
+});
 
-    function getExercises(group, subgroup) {
-      fetch(`/get_ejercicios?grupo=${group}&subgrupo=${subgroup}`)
-        .then(response => response.json())
+function loadExercises() {
+    fetch(`/get_ejercicios?grupo=${selectedGroup}&subgrupo=${selectedSubgroup}`)
+        .then(r => r.json())
         .then(data => {
-          const exercisesContainer = document.getElementById('exercises-container');
-          exercisesContainer.innerHTML = "";
-          selectedExercises = [];
-
-          data.ejercicios.forEach(ex => {
-            const exDiv = document.createElement('div');
-            exDiv.className = 'exercise';
-            exDiv.innerHTML = `<img src="${ex.imagen_url}" alt="${ex.Nombre_ejercicio}"><br>${ex.Nombre_ejercicio}`;
-            exDiv.setAttribute('data-id', ex.id);
-
-            exDiv.addEventListener('click', () => {
-              const exId = parseInt(exDiv.getAttribute('data-id'));
-              if (!routineData[selectedDay].some(e => e.ejercicios.includes(exId))) {
-                selectedExercises.push(exId);
-                exDiv.style.border = "2px solid red";
-              } else {
-                alert("Este ejercicio ya está agregado para este día.");
-              }
+            const container = document.getElementById('exercises-container');
+            selectedExercises = [];
+            container.innerHTML = data.ejercicios.map(ex => `
+                <div class="exercise-item" data-id="${ex.id}">
+                    <img src="${ex.imagen_url || ''}" style="width: 40px; height: 40px; border-radius: 8px;">
+                    <span>${ex.Nombre_ejercicio}</span>
+                </div>
+            `).join('');
+            
+            container.querySelectorAll('.exercise-item').forEach(item => {
+                item.onclick = () => {
+                    const id = parseInt(item.dataset.id);
+                    if (selectedExercises.includes(id)) {
+                        selectedExercises = selectedExercises.filter(x => x !== id);
+                        item.classList.remove('selected');
+                    } else {
+                        selectedExercises.push(id);
+                        item.classList.add('selected');
+                    }
+                };
             });
-
-            exercisesContainer.appendChild(exDiv);
-          });
-
-          document.getElementById('exercise-heading').style.display = 'block';
-          exercisesContainer.style.display = 'block';
+            showStep('step-exercises');
         });
-    }
+}
 
-    document.getElementById('add-group').addEventListener('click', () => {
-      if (!selectedDay || !selectedGroup || !selectedSubgroup || selectedExercises.length === 0) {
-        alert("Selecciona un día, un grupo, un subgrupo y al menos un ejercicio.");
-        return;
-      }
-
-      routineData[selectedDay].push({
+document.getElementById('add-to-day').onclick = () => {
+    if (selectedExercises.length === 0) return alert("Selecciona algún ejercicio");
+    
+    routineData[selectedDay].push({
         grupo: selectedGroup,
         subgrupo: selectedSubgroup,
         ejercicios: [...selectedExercises]
-      });
-
-      updateSummary();
-
-      selectedGroup = null;
-      selectedSubgroup = null;
-      selectedExercises = [];
-      document.getElementById('subgroups-container').innerHTML = "";
-      document.getElementById('exercises-container').innerHTML = "";
-      alert("Grupo agregado para " + selectedDay);
     });
+    
+    updateSummary();
+    document.getElementById('submit-routine').style.display = 'block';
+    
+    // Reset steps
+    selectedGroup = selectedSubgroup = null;
+    selectedExercises = [];
+    document.querySelectorAll('.group-btn, .subgroup-btn').forEach(b => b.classList.remove('selected'));
+    showStep('step-day');
+};
 
-    function updateSummary() {
-      const summaryContainer = document.getElementById('summary-container');
-      summaryContainer.innerHTML = "";
+function updateSummary() {
+    const container = document.getElementById('summary-container');
+    container.innerHTML = Object.keys(routineData).map(day => `
+        <div class="summary-day">
+            <h3>${day}</h3>
+            ${routineData[day].map(g => `
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">${g.grupo} (${g.subgrupo}): ${g.ejercicios.length} ejercicios</p>
+            `).join('')}
+        </div>
+    `).join('');
+}
 
-      for (const day in routineData) {
-        const dayContainer = document.createElement('div');
-        dayContainer.innerHTML = `<h3>${day}</h3>`;
-
-        routineData[day].forEach(group => {
-          const p = document.createElement('p');
-          p.textContent = `${group.grupo} - ${group.subgrupo} - Ejercicios: ${group.ejercicios.join(", ")}`;
-          dayContainer.appendChild(p);
-        });
-
-        summaryContainer.appendChild(dayContainer);
-      }
-    }
-
-    // Enviar toda la rutina al servidor
-    document.getElementById('submit-routine').addEventListener('click', () => {
-      const routineName = document.getElementById('nombre_rutina').value;
-      if (!routineName || Object.keys(routineData).length === 0) {
-        alert("Debes completar todos los campos y agregar al menos un grupo de ejercicios.");
-        return;
-      }
-      const data = {
-        nombre_rutina: routineName,
-        dias: routineData
-      };
-      console.log("Enviando rutina:", data);
-      fetch('/api/rutinas', {
+document.getElementById('submit-routine').onclick = () => {
+    const name = document.getElementById('nombre_rutina').value;
+    if (!name) return alert("Ponle un nombre a la rutina");
+    
+    fetch('/api/rutinas', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      })
-      .then(response => response.json())
-      .then(result => {
-        console.log("Respuesta del servidor:", result);
-        if (result.mensaje) {
-          alert(result.mensaje);
-          window.location.href = '/dashboard';
-        } else {
-          alert("Error: " + result.error);
-        }
-      })
-      .catch(error => console.error("Error al enviar la rutina:", error));
+        body: JSON.stringify({ nombre_rutina: name, dias: routineData })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.mensaje) {
+            alert(res.mensaje);
+            window.location.href = '/dashboard';
+        } else alert("Error: " + res.error);
     });
-  </script>
-</body>
-</html>
+};
+</script>
+{% endblock %}
