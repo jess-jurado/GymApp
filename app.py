@@ -435,7 +435,14 @@ def obtener_series(ejercicio_id, fecha):
     return jsonify({"series": [{"serie": row[0], "repeticiones": row[1], "peso": row[2]} for row in series]})
 
 # Configurar la localización en español para obtener el nombre del día correctamente
-locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+# Configurar la localización en español si está disponible, si no usar la por defecto
+try:
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES')
+    except locale.Error:
+        print("⚠️ No se pudo configurar el idioma español, usando el idioma del sistema.")
 
 @app.route('/entrenamientos_realizados/<fecha>', methods=['GET'])
 def entrenamientos_realizados(fecha):
