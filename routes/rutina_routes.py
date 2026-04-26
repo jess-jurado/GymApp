@@ -191,6 +191,28 @@ def eliminar_rutina(current_user, rutina_id):
         cursor.close()
         conn.close()
 
+# Ruta para eliminar una rutina completa (todos sus ejercicios)
+@rutinas_bp.route("/eliminar_rutina_completa/<nombre_rutina>", methods=["POST"])
+@token_required
+def eliminar_rutina_completa(current_user, nombre_rutina):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Verificar si existe al menos un registro de esta rutina para el usuario
+        cursor.execute("SELECT id FROM Rutinas WHERE Nombre_rutina = ? AND Usuario_id = ?", (nombre_rutina, current_user))
+        if not cursor.fetchone():
+            return jsonify({"error": "Rutina no encontrada o no autorizada"}), 404
+
+        # Eliminar todos los registros de esta rutina
+        cursor.execute("DELETE FROM Rutinas WHERE Nombre_rutina = ? AND Usuario_id = ?", (nombre_rutina, current_user))
+        conn.commit()
+        return jsonify({"mensaje": "Rutina completa eliminada"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 
 @rutinas_bp.route('/get_ejercicios_por_grupo', methods=['GET'])
 def get_ejercicios_por_grupo():

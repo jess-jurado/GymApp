@@ -42,9 +42,15 @@
 {% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 24px;">
-    <a href="/dashboard" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">← Volver al Dashboard</a>
-    <h1 style="margin-top: 12px;">{{ rutina.Nombre_rutina }}</h1>
+<div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+        <a href="/dashboard" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">← Volver al Dashboard</a>
+        <h1 style="margin-top: 12px;">{{ rutina.Nombre_rutina }}</h1>
+    </div>
+    <div style="display: flex; gap: 8px; flex-direction: column;">
+        <button onclick="eliminarRutina('{{ rutina.Nombre_rutina }}')" class="btn" style="background: #ef4444; color: white; padding: 6px 12px; font-size: 0.85rem;">🗑️ Eliminar Rutina</button>
+        <a href="/api/crear_rutina?edit={{ rutina.Nombre_rutina | urlencode }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; text-align: center;">+ Añadir Ejercicio</a>
+    </div>
 </div>
 
 {% if ejercicios_por_dia %}
@@ -56,13 +62,18 @@
 
         <div class="grid">
             {% for ejercicio in ejercicios %}
-            <a href="/detalle_ejercicio/{{ rutina.id }}/{{ ejercicio.id }}" class="ejercicio-card">
-                <div>
-                    <h4 style="margin-bottom: 2px;">{{ ejercicio.Nombre_ejercicio }}</h4>
-                    <p style="font-size: 0.85rem;">{{ ejercicio.Subgrupo_muscular }}</p>
+            <div class="ejercicio-card">
+                <a href="/detalle_ejercicio/{{ rutina.id }}/{{ ejercicio.id }}" style="text-decoration: none; color: white; display: flex; align-items: center; justify-content: space-between; flex: 1;">
+                    <div>
+                        <h4 style="margin-bottom: 2px;">{{ ejercicio.Nombre_ejercicio }}</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">{{ ejercicio.Subgrupo_muscular }}</p>
+                    </div>
+                </a>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <a href="/detalle_ejercicio/{{ rutina.id }}/{{ ejercicio.id }}" style="color: var(--accent-color); text-decoration: none;">▶</a>
+                    <button onclick="eliminarEjercicio({{ ejercicio.r_id }})" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer;" title="Quitar de la rutina">❌</button>
                 </div>
-                <div style="color: var(--accent-color);">▶</div>
-            </a>
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -119,5 +130,48 @@
         })
         .catch(error => console.error("Error al cargar el calendario:", error));
     });
+
+    function eliminarRutina(nombre) {
+        if (!confirm(`¿Estás seguro de que quieres eliminar la rutina "${nombre}" completa?`)) return;
+        
+        // Authorization token
+        let token = localStorage.getItem('token') || '';
+        let headers = { "Content-Type": "application/json" };
+        if(token) headers["Authorization"] = "Bearer " + token;
+
+        fetch(`/api/eliminar_rutina_completa/${encodeURIComponent(nombre)}`, {
+            method: 'POST',
+            headers: headers
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.mensaje) {
+                window.location.href = '/dashboard';
+            } else {
+                alert(data.error || "Hubo un error eliminando la rutina");
+            }
+        });
+    }
+
+    function eliminarEjercicio(rutinaId) {
+        if (!confirm("¿Seguro que quieres quitar este ejercicio de la rutina?")) return;
+
+        let token = localStorage.getItem('token') || '';
+        let headers = { "Content-Type": "application/json" };
+        if(token) headers["Authorization"] = "Bearer " + token;
+
+        fetch(`/api/rutinas/${rutinaId}`, {
+            method: 'DELETE',
+            headers: headers
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.mensaje) {
+                location.reload();
+            } else {
+                alert(data.error || "Hubo un error eliminando el ejercicio");
+            }
+        });
+    }
 </script>
 {% endblock %}

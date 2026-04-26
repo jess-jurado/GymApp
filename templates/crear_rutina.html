@@ -58,7 +58,7 @@
     <p>Sigue los pasos para configurar tu plan</p>
 </div>
 
-<div class="card">
+<div class="card" id="nombre_container">
     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Nombre de la Rutina</label>
     <input type="text" id="nombre_rutina" placeholder="Ej: Empuje / Tracción" required>
 </div>
@@ -75,7 +75,10 @@
 
 <!-- Step 2: Group -->
 <div id="step-group" class="step-section">
-    <h3>2. Grupo Muscular</h3>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h3>2. Grupo Muscular</h3>
+        <button class="btn btn-secondary" onclick="showStep('step-day')" style="padding: 4px 12px; font-size: 0.8rem;">← Volver</button>
+    </div>
     <div class="button-grid" style="margin-top: 12px;">
         {% for grupo in ['Pecho', 'Espalda', 'Piernas', 'Biceps', 'Triceps', 'Abdominales'] %}
             <button class="option-btn group-btn" data-group="{{ grupo }}">{{ grupo }}</button>
@@ -85,13 +88,19 @@
 
 <!-- Step 3: Subgroup -->
 <div id="step-subgroup" class="step-section">
-    <h3>3. Subgrupo</h3>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h3>3. Subgrupo</h3>
+        <button class="btn btn-secondary" onclick="showStep('step-group')" style="padding: 4px 12px; font-size: 0.8rem;">← Volver</button>
+    </div>
     <div id="subgroups-container" class="button-grid" style="margin-top: 12px;"></div>
 </div>
 
 <!-- Step 4: Exercises -->
 <div id="step-exercises" class="step-section">
-    <h3>4. Ejercicios</h3>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h3>4. Ejercicios</h3>
+        <button class="btn btn-secondary" onclick="showStep('step-subgroup')" style="padding: 4px 12px; font-size: 0.8rem;">← Volver</button>
+    </div>
     <div id="exercises-container" class="button-grid" style="margin-top: 12px;"></div>
     <button id="add-to-day" class="btn btn-secondary" style="margin-top: 16px;">+ Añadir estos ejercicios</button>
 </div>
@@ -114,6 +123,19 @@ let selectedDay, selectedGroup, selectedSubgroup, selectedExercises = [];
 function showStep(stepId) {
     document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
     document.getElementById(stepId).classList.add('active');
+    
+    // Clear selections if going back
+    if (stepId === 'step-day') {
+        selectedGroup = selectedSubgroup = null;
+        selectedExercises = [];
+        document.querySelectorAll('.group-btn').forEach(b => b.classList.remove('selected'));
+    } else if (stepId === 'step-group') {
+        selectedSubgroup = null;
+        selectedExercises = [];
+    } else if (stepId === 'step-subgroup') {
+        selectedExercises = [];
+    }
+    
     window.scrollTo({ top: document.getElementById(stepId).offsetTop - 100, behavior: 'smooth' });
 }
 
@@ -216,6 +238,18 @@ function updateSummary() {
     `).join('');
 }
 
+// Handle "Edit existing routine" URL parameter
+const urlParams = new URLSearchParams(window.location.search);
+const editName = urlParams.get('edit');
+
+if (editName) {
+    document.getElementById('nombre_rutina').value = editName;
+    document.getElementById('nombre_container').style.display = 'none';
+    document.querySelector('h1').innerText = "Añadir a " + editName;
+    const btnSubmit = document.getElementById('submit-routine');
+    btnSubmit.innerText = "Añadir a la Rutina Existente";
+}
+
 document.getElementById('submit-routine').onclick = () => {
     const name = document.getElementById('nombre_rutina').value;
     if (!name) return alert("Ponle un nombre a la rutina");
@@ -223,6 +257,11 @@ document.getElementById('submit-routine').onclick = () => {
     fetch('/api/rutinas', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Use token if you rely on the API blueprint prefix /api
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + (localStorage.getItem('token') || '') // If using localStorage token. (Fallback to session logic if empty)
+        },
         body: JSON.stringify({ nombre_rutina: name, dias: routineData })
     })
     .then(r => r.json())

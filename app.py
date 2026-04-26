@@ -278,7 +278,7 @@ def detalle_rutina(id):
 
     # Obtener los ejercicios agrupados por día
     query_ejercicios = """
-        SELECT r.Dia, e.id, e.Nombre_ejercicio, e.Subgrupo_muscular
+        SELECT r.Dia, e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, r.id
         FROM Rutinas r
         INNER JOIN Ejercicios e ON r.Id_ejercicio = e.id
         WHERE r.Nombre_rutina = ? AND r.Usuario_id = ?
@@ -300,10 +300,10 @@ def detalle_rutina(id):
 
     # Organizar los ejercicios por día en un diccionario
     ejercicios_por_dia = {}
-    for dia, ejercicio_id, ejercicio, subgrupo in ejercicios:
+    for dia, ejercicio_id, ejercicio, subgrupo, r_id in ejercicios:
         if dia not in ejercicios_por_dia:
             ejercicios_por_dia[dia] = []
-        ejercicios_por_dia[dia].append({"id": ejercicio_id,"Nombre_ejercicio": ejercicio, "Subgrupo_muscular": subgrupo})
+        ejercicios_por_dia[dia].append({"id": ejercicio_id, "Nombre_ejercicio": ejercicio, "Subgrupo_muscular": subgrupo, "r_id": r_id})
 
     # Ordenar el diccionario de ejercicios según el orden de los días de la semana
     ejercicios_por_dia_ordenado = dict(sorted(ejercicios_por_dia.items(), key=lambda x: orden_dias.get(x[0], 999)))
