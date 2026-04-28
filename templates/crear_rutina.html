@@ -83,6 +83,7 @@
         {% for grupo in ['Pecho', 'Espalda', 'Piernas', 'Biceps', 'Triceps', 'Abdominales'] %}
             <button class="option-btn group-btn" data-group="{{ grupo }}">{{ grupo }}</button>
         {% endfor %}
+        <button class="option-btn group-btn cardio-group-btn" data-group="Cardio" style="grid-column: 1 / -1; background: linear-gradient(135deg, #1e3a5f, #0f2447); border-color: #38bdf8;">🏃 Cardio</button>
     </div>
 </div>
 
@@ -93,6 +94,16 @@
         <button class="btn btn-secondary" onclick="showStep('step-group')" style="padding: 4px 12px; font-size: 0.8rem;">← Volver</button>
     </div>
     <div id="subgroups-container" class="button-grid" style="margin-top: 12px;"></div>
+</div>
+
+<!-- Step Cardio -->
+<div id="step-cardio" class="step-section">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h3>3. Tipo de Cardio</h3>
+        <button class="btn btn-secondary" onclick="showStep('step-group')" style="padding: 4px 12px; font-size: 0.8rem;">← Volver</button>
+    </div>
+    <div id="cardio-options-container" class="button-grid" style="margin-top: 12px;"></div>
+    <button id="add-cardio-to-day" class="btn btn-secondary" style="margin-top: 16px; display: none;">+ Añadir Cardio al Día</button>
 </div>
 
 <!-- Step 4: Exercises -->
@@ -156,27 +167,84 @@ document.querySelectorAll('.group-btn').forEach(btn => {
         selectedGroup = btn.dataset.group;
         document.querySelectorAll('.group-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
-        
-        fetch(`/get_subgrupos?grupo=${selectedGroup}`)
-            .then(r => r.json())
-            .then(data => {
-                const container = document.getElementById('subgroups-container');
-                container.innerHTML = data.subgrupos.map(sub => `
-                    <button class="option-btn subgroup-btn" data-subgroup="${sub}">${sub}</button>
-                `).join('');
-                
-                container.querySelectorAll('.subgroup-btn').forEach(sb => {
-                    sb.onclick = () => {
-                        selectedSubgroup = sb.dataset.subgroup;
-                        document.querySelectorAll('.subgroup-btn').forEach(b => b.classList.remove('selected'));
-                        sb.classList.add('selected');
-                        loadExercises();
-                    };
+
+        if (selectedGroup === 'Cardio') {
+            // Flujo especial para cardio
+            fetch('/get_ejercicios?grupo=Cardio&subgrupo=Cardio')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('cardio-options-container');
+                    selectedExercises = [];
+                    document.getElementById('add-cardio-to-day').style.display = 'none';
+
+                    if (data.ejercicios && data.ejercicios.length > 0) {
+                        container.innerHTML = data.ejercicios.map(ex => {
+                            const icono = ex.Nombre_ejercicio === 'Cinta de Correr' ? '🏃‍♂️' : '🔄';
+                            return `<button class="option-btn cardio-equipment-btn"
+                                        data-id="${ex.id}"
+                                        data-nombre="${ex.Nombre_ejercicio}"
+                                        style="padding: 20px; font-size: 1rem;">
+                                        ${icono}<br><strong>${ex.Nombre_ejercicio}</strong>
+                                    </button>`;
+                        }).join('');
+
+                        container.querySelectorAll('.cardio-equipment-btn').forEach(cb => {
+                            cb.onclick = () => {
+                                document.querySelectorAll('.cardio-equipment-btn').forEach(b => b.classList.remove('selected'));
+                                cb.classList.add('selected');
+                                selectedExercises = [parseInt(cb.dataset.id)];
+                                selectedSubgroup = 'Cardio';
+                                document.getElementById('add-cardio-to-day').style.display = 'block';
+                            };
+                        });
+                    } else {
+                        container.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">No hay ejercicios de cardio. Ejecuta <code>migrate_cardio.py</code> primero.</p>';
+                    }
+                    showStep('step-cardio');
                 });
-                showStep('step-subgroup');
-            });
+        } else {
+            // Flujo normal para grupos musculares
+            fetch(`/get_subgrupos?grupo=${selectedGroup}`)
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('subgroups-container');
+                    container.innerHTML = data.subgrupos.map(sub => `
+                        <button class="option-btn subgroup-btn" data-subgroup="${sub}">${sub}</button>
+                    `).join('');
+
+                    container.querySelectorAll('.subgroup-btn').forEach(sb => {
+                        sb.onclick = () => {
+                            selectedSubgroup = sb.dataset.subgroup;
+                            document.querySelectorAll('.subgroup-btn').forEach(b => b.classList.remove('selected'));
+                            sb.classList.add('selected');
+                            loadExercises();
+                        };
+                    });
+                    showStep('step-subgroup');
+                });
+        }
     };
 });
+
+// Cardio: añadir al día
+document.getElementById('add-cardio-to-day').onclick = () => {
+    if (selectedExercises.length === 0) return alert('Selecciona un tipo de cardio');
+
+    routineData[selectedDay].push({
+        grupo: 'Cardio',
+        subgrupo: 'Cardio',
+        ejercicios: [...selectedExercises]
+    });
+
+    updateSummary();
+    document.getElementById('submit-routine').style.display = 'block';
+
+    selectedGroup = selectedSubgroup = null;
+    selectedExercises = [];
+    document.querySelectorAll('.group-btn, .cardio-equipment-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('add-cardio-to-day').style.display = 'none';
+    showStep('step-day');
+};
 
 function loadExercises() {
     fetch(`/get_ejercicios?grupo=${selectedGroup}&subgrupo=${selectedSubgroup}`)
@@ -222,7 +290,7 @@ document.getElementById('add-to-day').onclick = () => {
     // Reset steps
     selectedGroup = selectedSubgroup = null;
     selectedExercises = [];
-    document.querySelectorAll('.group-btn, .subgroup-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.group-btn, .subgroup-btn, .cardio-equipment-btn').forEach(b => b.classList.remove('selected'));
     showStep('step-day');
 };
 
@@ -253,15 +321,14 @@ if (editName) {
 document.getElementById('submit-routine').onclick = () => {
     const name = document.getElementById('nombre_rutina').value;
     if (!name) return alert("Ponle un nombre a la rutina");
-    
+
+    const token = localStorage.getItem('token');
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+
     fetch('/api/rutinas', {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Use token if you rely on the API blueprint prefix /api
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + (localStorage.getItem('token') || '') // If using localStorage token. (Fallback to session logic if empty)
-        },
+        headers: headers,
         body: JSON.stringify({ nombre_rutina: name, dias: routineData })
     })
     .then(r => r.json())

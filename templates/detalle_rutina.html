@@ -62,7 +62,8 @@
 
         <div class="grid">
             {% for ejercicio in ejercicios %}
-            <div class="ejercicio-card">
+            {% set completado = ejercicio.id in completados_hoy %}
+            <div class="ejercicio-card" style="{% if completado %}border-color: #22c55e; background: rgba(34,197,94,0.07);{% endif %}">
                 <a href="/detalle_ejercicio/{{ rutina.id }}/{{ ejercicio.id }}" style="text-decoration: none; color: white; display: flex; align-items: center; justify-content: space-between; flex: 1;">
                     <div>
                         <h4 style="margin-bottom: 2px;">{{ ejercicio.Nombre_ejercicio }}</h4>
@@ -70,7 +71,11 @@
                     </div>
                 </a>
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <a href="/detalle_ejercicio/{{ rutina.id }}/{{ ejercicio.id }}" style="color: var(--accent-color); text-decoration: none;">▶</a>
+                    {% if completado %}
+                        <span style="font-size: 1.5rem;" title="Completado hoy">✅</span>
+                    {% else %}
+                        <a href="/detalle_ejercicio/{{ rutina.id }}/{{ ejercicio.id }}" style="color: var(--accent-color); text-decoration: none; font-size: 1.3rem;">▶</a>
+                    {% endif %}
                     <button onclick="eliminarEjercicio({{ ejercicio.r_id }})" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer;" title="Quitar de la rutina">❌</button>
                 </div>
             </div>

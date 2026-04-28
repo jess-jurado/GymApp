@@ -9,25 +9,27 @@ rutinas_bp = Blueprint('rutinas', __name__)
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        auth_header = request.headers.get('Authorization', '')
+        token = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ''
+
         if token:
-            # Si se envía token, se procesa
-            if token.startswith("Bearer "):
-                token = token[7:]
+            # Hay token JWT: intentar decodificarlo
             try:
                 decoded = jwt.decode(token, "super_secreto", algorithms=["HS256"])
                 current_user = decoded['user_id']
             except jwt.ExpiredSignatureError:
                 return jsonify({"error": "Token ha expirado"}), 401
-            except jwt.InvalidTokenError:
-                return jsonify({"error": "Token inválido"}), 401
-            except Exception as e:
-                return jsonify({"error": str(e)}), 401
+            except (jwt.InvalidTokenError, Exception):
+                # Token inválido → intentar sesión antes de rechazar
+                current_user = session.get("user_id")
+                if not current_user:
+                    return jsonify({"error": "Sesión no válida. Inicia sesión de nuevo."}), 401
         else:
-            # Si no hay token, se revisa la sesión
+            # Sin token → usar sesión Flask
             current_user = session.get("user_id")
             if not current_user:
-                return jsonify({"error": "Token requerido"}), 401
+                return jsonify({"error": "Debes iniciar sesión."}), 401
+
         return f(current_user, *args, **kwargs)
     return decorated_function
 
@@ -52,28 +54,27 @@ def crear_rutina(current_user):
     cursor = conn.cursor()
 
     try:
-        # Verificar si ya existe una rutina con el mismo nombre para el usuario
+        # Comprobar si ya existe una rutina con este nombre (modo edición = añadir ejercicios)
         cursor.execute(
             "SELECT id FROM Rutinas WHERE Usuario_id = ? AND Nombre_rutina = ?",
             (current_user, nombre_rutina)
         )
-        if cursor.fetchone():
-            return jsonify({"error": "Ya tienes una rutina con este nombre"}), 400
-        
-        # Insertar la nueva rutina en la base de datos para cada ejercicio seleccionado
+        es_nueva = cursor.fetchone() is None
+
+        # Insertar los nuevos ejercicios (tanto si es nueva como si se está editando)
         for dia, ejercicios_dia in dias.items():
             for ejercicio_info in ejercicios_dia:
-                # Aquí insertamos solo los valores necesarios: Usuario_id, Nombre_rutina, Dia, Id_ejercicio
                 id_ejercicios = ejercicio_info.get("ejercicios", [])
                 for id_ejercicio in id_ejercicios:
-                    print(f"Insertando ejercicio ID: {id_ejercicio} en el día {dia}")  # Depuración
+                    print(f"Insertando ejercicio ID: {id_ejercicio} en el día {dia}")
                     cursor.execute(
                         "INSERT INTO Rutinas (Usuario_id, Nombre_rutina, Dia, Id_ejercicio) VALUES (?, ?, ?, ?)",
                         (current_user, nombre_rutina, dia, id_ejercicio)
                     )
 
         conn.commit()
-        return jsonify({"mensaje": "Rutina creada correctamente"}), 201
+        mensaje = "Rutina creada correctamente" if es_nueva else "Ejercicios añadidos a la rutina"
+        return jsonify({"mensaje": mensaje}), 201
 
     except Exception as e:
         print("Error:", str(e))  # Depuración en consola

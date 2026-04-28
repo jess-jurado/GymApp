@@ -286,6 +286,14 @@ def detalle_rutina(id):
     cursor.execute(query_ejercicios, (nombre_rutina, usuario_id))
     ejercicios = cursor.fetchall()
 
+    # Ejercicios completados hoy (para los checkmarks)
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    cursor.execute(
+        "SELECT DISTINCT Id_ejercicio FROM Historial WHERE Usuario_id = ? AND Fecha LIKE ?",
+        (usuario_id, f"{fecha_hoy}%")
+    )
+    completados_hoy = {row[0] for row in cursor.fetchall()}
+
     cursor.close()
     conn.close()
 
@@ -311,7 +319,8 @@ def detalle_rutina(id):
     return render_template(
         'detalle_rutina.html',
         rutina={"id": rutina_id, "Nombre_rutina": nombre_rutina},
-        ejercicios_por_dia=ejercicios_por_dia_ordenado
+        ejercicios_por_dia=ejercicios_por_dia_ordenado,
+        completados_hoy=completados_hoy
     )
 
 @app.route('/detalle_ejercicio/<int:rutina_id>/<int:ejercicio_id>', methods=['GET'])
@@ -321,7 +330,7 @@ def detalle_ejercicio(rutina_id, ejercicio_id):
 
     # Obtener detalles del ejercicio específico dentro de la rutina
     query_ejercicio = """
-        SELECT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, e.imagen_url
+        SELECT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, e.imagen_url, e.Grupo_muscular
         FROM Ejercicios e
         JOIN Rutinas r ON e.id = r.Id_ejercicio
         WHERE r.Nombre_rutina = (SELECT Nombre_rutina FROM Rutinas WHERE id = ?) 
@@ -330,16 +339,17 @@ def detalle_ejercicio(rutina_id, ejercicio_id):
     cursor.execute(query_ejercicio, (rutina_id, ejercicio_id))
     ejercicio = cursor.fetchone()
 
-    # **Evitar el error si no se encuentra el ejercicio**
+    # Evitar el error si no se encuentra el ejercicio
     if not ejercicio:
         flash("No se encontró el ejercicio en esta rutina.", "error")
         return redirect(url_for('dashboard'))
 
-    # Asignar variables después de verificar que `ejercicio` no es None
     nombre_ejercicio = ejercicio[1]
     subgrupo_muscular = ejercicio[2]
     prefijo_imagen = ejercicio[3]
-    
+    grupo_muscular = ejercicio[4]
+    is_cardio = (grupo_muscular == 'Cardio')
+
     imagen_url_ = buscar_imagen_local(prefijo_imagen) if prefijo_imagen else None
 
     cursor.close()
@@ -350,8 +360,37 @@ def detalle_ejercicio(rutina_id, ejercicio_id):
         nombre_ejercicio=nombre_ejercicio,
         subgrupo_muscular=subgrupo_muscular,
         imagen_url=imagen_url_,
-        ejercicio_id=ejercicio_id
+        ejercicio_id=ejercicio_id,
+        is_cardio=is_cardio
     )
+
+
+@app.route('/guardar_cardio/<int:ejercicio_id>', methods=['POST'])
+def guardar_cardio(ejercicio_id):
+    data = request.get_json(force=True)
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Usuario no autenticado"}), 401
+
+    duracion = data.get('duracion')
+    calorias = data.get('calorias')
+
+    if duracion is None or calorias is None:
+        return jsonify({"error": "Datos incompletos"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    fecha_actual = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    cursor.execute("""
+        INSERT INTO Historial (Id_ejercicio, Series, Repeticiones, Peso, Fecha, Usuario_id, Calorias, Duracion_min)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (ejercicio_id, 1, 0, 0, fecha_actual, user_id, calorias, duracion))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Cardio guardado correctamente"}), 200
 
 @app.route('/guardar_series/<int:ejercicio_id>', methods=['POST'])
 def guardar_series(ejercicio_id):

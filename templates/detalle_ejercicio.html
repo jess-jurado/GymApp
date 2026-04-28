@@ -12,44 +12,103 @@
         background: #000;
         border: 1px solid #334155;
     }
-    .ejercicio-image-container img {
-        width: 100%;
-        display: block;
-        opacity: 0.9;
+    .ejercicio-image-container img { width: 100%; display: block; opacity: 0.9; }
+
+    /* ── Cardio ── */
+    .cardio-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: linear-gradient(135deg, #1e3a5f, #0f2447);
+        border: 1px solid #38bdf8; color: #38bdf8;
+        padding: 4px 14px; border-radius: 20px;
+        font-size: 0.8rem; font-weight: 700; margin-bottom: 16px;
     }
+    .cardio-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+    .cardio-stat-card {
+        background: #111827; border: 1px solid #1e3a5f;
+        border-radius: 16px; padding: 20px 16px; text-align: center;
+    }
+    .cardio-stat-card .stat-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+    .cardio-stat-card label {
+        display: block; font-size: 0.75rem; color: var(--text-secondary);
+        margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .cardio-stat-card input {
+        background: transparent; border: none;
+        border-bottom: 2px solid #334155; width: 100%;
+        text-align: center; font-size: 1.6rem; font-weight: 800;
+        color: #38bdf8; padding: 4px 0; outline: none; margin-bottom: 4px;
+    }
+    .cardio-stat-card input:focus { border-bottom-color: #38bdf8; }
+    .cardio-stat-card .stat-unit { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* ── Serie rows ── */
     .serie-row {
         background: var(--card-bg);
-        padding: 16px;
-        border-radius: var(--border-radius);
         border: 1px solid #334155;
+        border-radius: var(--border-radius);
+        padding: 14px 16px;
         margin-bottom: 12px;
+        animation: fadeSlide 0.2s ease;
     }
-    .input-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-top: 8px;
+    .serie-row.done { border-color: #22c55e; background: rgba(34,197,94,0.06); }
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
-    .input-card {
-        background: #111827;
-        padding: 8px;
-        border-radius: 12px;
+    .serie-header {
+        display: flex; justify-content: space-between;
+        align-items: center; margin-bottom: 12px;
     }
-    .input-card label {
-        display: block;
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        margin-bottom: 4px;
+    .serie-label { font-weight: 800; color: var(--accent-color); font-size: 0.85rem; letter-spacing: 0.05em; }
+    .serie-remove-btn {
+        background: transparent; border: none;
+        color: #64748b; font-size: 1.1rem; cursor: pointer;
+        padding: 2px 6px; border-radius: 6px; transition: color 0.15s;
     }
-    .input-card input {
-        margin-bottom: 0;
-        padding: 8px;
-        text-align: center;
-        border: none;
-        background: transparent;
-        font-size: 1.2rem;
-        font-weight: 700;
+    .serie-remove-btn:hover { color: #ef4444; }
+
+    /* ── Stepper grid ── */
+    .stepper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stepper-card {
+        background: #111827; border-radius: 14px;
+        padding: 10px 8px; text-align: center;
     }
+    .stepper-card label {
+        display: block; font-size: 0.7rem;
+        color: var(--text-secondary); margin-bottom: 6px;
+        text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .stepper {
+        display: flex; align-items: center;
+        justify-content: center; gap: 4px;
+    }
+    .stepper-btn {
+        width: 44px; height: 44px;
+        background: #1e293b; border: 1px solid #334155;
+        color: white; font-size: 1.5rem; font-weight: 300;
+        border-radius: 10px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none; touch-action: manipulation;
+        transition: background 0.1s, transform 0.08s;
+    }
+    .stepper-btn:active { background: var(--accent-color); color: var(--bg-color); transform: scale(0.92); }
+    .stepper-value {
+        min-width: 52px; text-align: center;
+        font-size: 1.5rem; font-weight: 800; color: white;
+        padding: 0 4px;
+    }
+    .stepper-unit { font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ── Add serie button ── */
+    #add-serie-btn {
+        width: 100%; margin-top: 4px; margin-bottom: 4px;
+        border: 1.5px dashed #334155; background: transparent;
+        color: var(--text-secondary); padding: 12px;
+        border-radius: var(--border-radius); font-size: 0.95rem;
+        font-weight: 600; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    #add-serie-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
 </style>
 {% endblock %}
 
@@ -57,7 +116,11 @@
 <div style="margin-bottom: 24px;">
     <a href="javascript:history.back()" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">← Volver</a>
     <h1 style="margin-top: 12px;">{{ nombre_ejercicio }}</h1>
-    <p>{{ subgrupo_muscular }}</p>
+    {% if is_cardio %}
+        <span class="cardio-badge">🏃 Cardio</span>
+    {% else %}
+        <p>{{ subgrupo_muscular }}</p>
+    {% endif %}
 </div>
 
 {% if imagen_url %}
@@ -67,112 +130,215 @@
 {% endif %}
 
 <form id="detalle-ejercicio-form">
-    <div class="card">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600;">¿Cuántas series vas a hacer?</label>
-        <input type="number" id="series" name="series" placeholder="Ej: 3" min="1" required oninput="generarSeries()" style="font-size: 1.2rem; text-align: center;">
+{% if is_cardio %}
+    <!-- ── Formulario Cardio ── -->
+    <div class="cardio-stat-grid">
+        <div class="cardio-stat-card">
+            <span class="stat-icon">⏱️</span>
+            <label for="duracion">Duración</label>
+            <input type="number" id="duracion" placeholder="30" min="1" max="300" required>
+            <span class="stat-unit">minutos</span>
+        </div>
+        <div class="cardio-stat-card">
+            <span class="stat-icon">🔥</span>
+            <label for="calorias">Calorías</label>
+            <input type="number" id="calorias" placeholder="250" min="0" required>
+            <span class="stat-unit">kcal quemadas</span>
+        </div>
     </div>
-
+{% else %}
+    <!-- ── Formulario Series dinámico ── -->
     <div id="series-container"></div>
+    <button type="button" id="add-serie-btn">＋ Añadir Serie</button>
+{% endif %}
 
-    <div style="margin-top: 24px;">
-        <button type="submit" class="btn btn-primary">Guardar Entrenamiento</button>
+    <div style="margin-top: 20px;">
+        <button type="submit" class="btn btn-primary">💾 Guardar Entrenamiento</button>
     </div>
 </form>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function generarSeries() {
-    const seriesContainer = document.getElementById("series-container");
-    const numSeries = parseInt(document.getElementById("series").value) || 0;
-    
-    // Save current values to restore them
-    const currentValues = {};
-    const inputs = seriesContainer.querySelectorAll('input');
-    inputs.forEach(input => {
-        currentValues[input.id] = input.value;
-    });
+const IS_CARDIO   = {{ 'true' if is_cardio else 'false' }};
+const EJERCICIO_ID = "{{ ejercicio_id }}";
 
-    seriesContainer.innerHTML = "";
+/* ════════════════════════════════════
+   STEPPER logic
+════════════════════════════════════ */
+{% if not is_cardio %}
+let serieCount = 0;
+let holdTimer = null;
+let holdInterval = null;
 
-    for (let i = 1; i <= numSeries; i++) {
-        const serieRow = document.createElement("div");
-        serieRow.classList.add("serie-row");
-        
-        serieRow.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 700; color: var(--accent-color);">SERIE ${i}</span>
-            </div>
-            <div class="input-row">
-                <div class="input-card">
-                    <label>Reps</label>
-                    <input type="number" id="repeticiones_${i}" placeholder="0" min="1" required>
-                </div>
-                <div class="input-card">
-                    <label>Peso (kg)</label>
-                    <input type="number" id="peso_${i}" placeholder="0" min="0" step="0.5" required>
-                </div>
-            </div>
-        `;
-        seriesContainer.appendChild(serieRow);
-        
-        // Restore values if they existed
-        if (currentValues[`repeticiones_${i}`]) {
-            document.getElementById(`repeticiones_${i}`).value = currentValues[`repeticiones_${i}`];
-        }
-        if (currentValues[`peso_${i}`]) {
-            document.getElementById(`peso_${i}`).value = currentValues[`peso_${i}`];
-        }
-    }
+function getStepperValue(btn) {
+    return parseFloat(btn.closest('.stepper').querySelector('.stepper-value').dataset.value) || 0;
+}
+function setStepperValue(btn, val) {
+    const span = btn.closest('.stepper').querySelector('.stepper-value');
+    const min  = parseFloat(span.dataset.min) || 0;
+    const step = parseFloat(span.dataset.step) || 1;
+    val = Math.max(min, Math.round(val / step) * step);
+    // Format: show .5 decimals only when needed
+    span.dataset.value = val;
+    span.textContent   = (step < 1) ? val.toFixed(1) : val;
 }
 
-document.getElementById('detalle-ejercicio-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const numSeries = parseInt(document.getElementById("series").value);
-    const ejercicioId = "{{ ejercicio_id }}";
-    let datosEjercicio = [];
+function stepBtn(btn, direction) {
+    const span = btn.closest('.stepper').querySelector('.stepper-value');
+    const step = parseFloat(span.dataset.step) || 1;
+    setStepperValue(btn, getStepperValue(btn) + direction * step);
+}
 
-    for (let i = 1; i <= numSeries; i++) {
-        const rep = document.getElementById(`repeticiones_${i}`).value;
-        const peso = document.getElementById(`peso_${i}`).value;
-        if (!rep || !peso) return alert(`Completa la serie ${i}`);
-        datosEjercicio.push({ serie: i, repeticiones: rep, peso: peso });
-    }
+function startHold(btn, direction) {
+    stepBtn(btn, direction);
+    holdTimer = setTimeout(() => {
+        holdInterval = setInterval(() => stepBtn(btn, direction), 80);
+    }, 400);
+}
+function stopHold() {
+    clearTimeout(holdTimer);
+    clearInterval(holdInterval);
+}
 
-    fetch(`/guardar_series/${ejercicioId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ series: datosEjercicio })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.error) alert(data.error);
-        else {
-            alert("¡Entrenamiento guardado!");
-            window.history.back();
-        }
+function addSerie(defaultReps = 10, defaultPeso = 0) {
+    serieCount++;
+    const container = document.getElementById('series-container');
+    const div = document.createElement('div');
+    div.classList.add('serie-row');
+    div.dataset.serie = serieCount;
+
+    div.innerHTML = `
+        <div class="serie-header">
+            <span class="serie-label">SERIE ${serieCount}</span>
+            ${serieCount > 1
+                ? `<button type="button" class="serie-remove-btn" onclick="removeSerie(this)">✕ Quitar</button>`
+                : ''}
+        </div>
+        <div class="stepper-grid">
+            <div class="stepper-card">
+                <label>Repeticiones</label>
+                <div class="stepper">
+                    <button type="button" class="stepper-btn"
+                        onmousedown="startHold(this,-1)" onmouseup="stopHold()" onmouseleave="stopHold()"
+                        ontouchstart="startHold(this,-1)" ontouchend="stopHold()">−</button>
+                    <span class="stepper-value" data-value="${defaultReps}" data-min="1" data-step="1">${defaultReps}</span>
+                    <button type="button" class="stepper-btn"
+                        onmousedown="startHold(this,1)" onmouseup="stopHold()" onmouseleave="stopHold()"
+                        ontouchstart="startHold(this,1)" ontouchend="stopHold()">+</button>
+                </div>
+                <div class="stepper-unit">reps</div>
+            </div>
+            <div class="stepper-card">
+                <label>Peso</label>
+                <div class="stepper">
+                    <button type="button" class="stepper-btn"
+                        onmousedown="startHold(this,-1)" onmouseup="stopHold()" onmouseleave="stopHold()"
+                        ontouchstart="startHold(this,-1)" ontouchend="stopHold()">−</button>
+                    <span class="stepper-value" data-value="${defaultPeso}" data-min="0" data-step="0.5">${parseFloat(defaultPeso).toFixed(1)}</span>
+                    <button type="button" class="stepper-btn"
+                        onmousedown="startHold(this,1)" onmouseup="stopHold()" onmouseleave="stopHold()"
+                        ontouchstart="startHold(this,1)" ontouchend="stopHold()">+</button>
+                </div>
+                <div class="stepper-unit">kg</div>
+            </div>
+        </div>
+    `;
+    container.appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function removeSerie(btn) {
+    btn.closest('.serie-row').remove();
+    // Re-numerar
+    document.querySelectorAll('.serie-row').forEach((row, idx) => {
+        row.dataset.serie = idx + 1;
+        row.querySelector('.serie-label').textContent = `SERIE ${idx + 1}`;
     });
-});
+    serieCount = document.querySelectorAll('.serie-row').length;
+}
 
-// Load existing data if coming from history
-document.addEventListener("DOMContentLoaded", function () {
+document.getElementById('add-serie-btn').onclick = () => {
+    const rows = document.querySelectorAll('.serie-row');
+    let lastReps = 10, lastPeso = 0;
+    if (rows.length > 0) {
+        const last = rows[rows.length - 1];
+        const spans = last.querySelectorAll('.stepper-value');
+        lastReps = parseFloat(spans[0].dataset.value) || 10;
+        lastPeso = parseFloat(spans[1].dataset.value) || 0;
+    }
+    addSerie(lastReps, lastPeso);
+};
+
+// Inicializar con la primera serie
+document.addEventListener('DOMContentLoaded', () => {
+    // Intentar cargar datos históricos del día si venimos del historial
     const urlParams = new URLSearchParams(window.location.search);
-    const fecha = urlParams.get("fecha");
-    const ejercicioId = "{{ ejercicio_id }}";
-
-    if (fecha && ejercicioId) {
-        fetch(`/api/obtener_series/${ejercicioId}/${fecha}`)
+    const fecha = urlParams.get('fecha');
+    if (fecha && EJERCICIO_ID) {
+        fetch(`/api/obtener_series/${EJERCICIO_ID}/${fecha}`)
             .then(r => r.json())
             .then(data => {
-                if (data.series) {
-                    document.getElementById("series").value = data.series.length;
-                    generarSeries();
-                    data.series.forEach(s => {
-                        document.getElementById(`repeticiones_${s.serie}`).value = s.repeticiones;
-                        document.getElementById(`peso_${s.serie}`).value = s.peso;
-                    });
+                if (data.series && data.series.length > 0) {
+                    data.series.forEach(s => addSerie(s.repeticiones, s.peso));
+                } else {
+                    addSerie();
                 }
-            });
+            })
+            .catch(() => addSerie());
+    } else {
+        addSerie();
+    }
+});
+{% endif %}
+
+/* ════════════════════════════════════
+   SUBMIT
+════════════════════════════════════ */
+document.getElementById('detalle-ejercicio-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (IS_CARDIO) {
+        const duracion = document.getElementById('duracion').value;
+        const calorias = document.getElementById('calorias').value;
+        if (!duracion || !calorias) return alert('Completa la duración y las calorías');
+
+        fetch(`/guardar_cardio/${EJERCICIO_ID}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duracion: parseInt(duracion), calorias: parseInt(calorias) })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) alert(data.error);
+            else { alert('¡Cardio guardado! 🔥'); window.history.back(); }
+        });
+
+    } else {
+        const rows = document.querySelectorAll('.serie-row');
+        if (rows.length === 0) return alert('Añade al menos una serie');
+
+        let datosEjercicio = [];
+        let valido = true;
+        rows.forEach((row, idx) => {
+            const spans = row.querySelectorAll('.stepper-value');
+            const reps  = parseFloat(spans[0].dataset.value) || 0;
+            const peso  = parseFloat(spans[1].dataset.value) || 0;
+            if (reps < 1) { alert(`La serie ${idx + 1} necesita al menos 1 repetición`); valido = false; return; }
+            datosEjercicio.push({ serie: idx + 1, repeticiones: reps, peso: peso });
+        });
+        if (!valido) return;
+
+        fetch(`/guardar_series/${EJERCICIO_ID}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ series: datosEjercicio })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) alert(data.error);
+            else { alert('¡Entrenamiento guardado! 💪'); window.history.back(); }
+        });
     }
 });
 </script>

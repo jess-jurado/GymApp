@@ -52,7 +52,9 @@ def init_database():
                 Repeticiones INTEGER,
                 Peso DECIMAL(10,2),
                 Fecha TIMESTAMP,
-                Usuario_id INTEGER REFERENCES Usuarios(Id)
+                Usuario_id INTEGER REFERENCES Usuarios(Id),
+                Calorias INTEGER,
+                Duracion_min INTEGER
             )
         ''')
         
