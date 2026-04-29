@@ -4,136 +4,125 @@
 
 {% block extra_css %}
 <style>
-    .welcome-section {
-        margin-bottom: 32px;
-        animation: fadeIn 0.5s ease;
-    }
+    .welcome-section { margin-bottom: 24px; animation: fadeIn 0.5s ease; }
     .welcome-section h1 {
-        font-size: 2rem;
-        font-weight: 800;
-        margin-bottom: 4px;
+        font-size: 1.8rem; font-weight: 800; margin-bottom: 4px;
         background: linear-gradient(to right, #fff, #94a3b8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .welcome-section p {
-        color: var(--text-secondary);
-        font-size: 1rem;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     
+    /* ── Tarjeta de Hoy (Principal) ── */
+    .today-card {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid #334155; border-radius: 24px; padding: 20px;
+        margin-bottom: 32px; position: relative; overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    .today-card::before {
+        content: ""; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px;
+        background: var(--accent-color); filter: blur(100px); opacity: 0.1; pointer-events: none;
+    }
+    .today-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .today-tag {
+        background: rgba(56, 189, 248, 0.15); color: var(--accent-color);
+        padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+    }
+    .progress-container { margin: 12px 0; }
+    .progress-text { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; font-weight: 600; }
+    .progress-bar-bg { background: #1e293b; height: 10px; border-radius: 10px; overflow: hidden; }
+    .progress-bar-fill { 
+        background: linear-gradient(to right, #38bdf8, #818cf8); 
+        height: 100%; border-radius: 10px; transition: width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    }
+
+    /* ── Lista de ejercicios de hoy ── */
+    .today-exercises { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .today-item {
+        background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+        text-decoration: none; color: white; transition: background 0.2s;
+    }
+    .today-item:active { background: rgba(255, 255, 255, 0.08); }
+    .today-item.done { border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.05); }
+    
+    .exercise-info h4 { font-size: 0.95rem; margin-bottom: 2px; }
+    .exercise-info p { font-size: 0.75rem; color: var(--text-secondary); }
+
+    .status-icon { font-size: 1.2rem; }
+
+    /* ── Sección de todas las rutinas ── */
     .section-title {
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--accent-color);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+        color: #64748b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
     }
-    .section-title::after {
-        content: "";
-        flex: 1;
-        height: 1px;
-        background: #1e293b;
+    .routine-card-mini {
+        background: #1e293b; border: 1px solid #334155; border-radius: 16px;
+        padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+        text-decoration: none; color: white;
     }
 
-    .routine-card {
-        background: linear-gradient(145deg, #1e293b, #0f172a);
-        border: 1px solid #334155;
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 16px;
-        cursor: pointer;
-        transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: relative;
-        overflow: hidden;
-    }
-    .routine-card:hover {
-        transform: translateY(-2px);
-        border-color: var(--accent-color);
-        box-shadow: 0 10px 20px -10px rgba(56, 189, 248, 0.3);
-    }
-    .routine-card::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; width: 4px; height: 100%;
-        background: var(--accent-color);
-        opacity: 0.5;
-    }
-    
-    .routine-info h3 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-    .routine-info span {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-    }
-
-    .arrow-icon {
-        background: #1e293b;
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--accent-color);
-        font-weight: 800;
-        transition: background 0.2s;
-    }
-    .routine-card:hover .arrow-icon {
-        background: var(--accent-color);
-        color: #0f172a;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="welcome-section">
-    <h1>Hola, {{ nombre }} 👋</h1>
-    <p>¿Qué vamos a entrenar hoy?</p>
+    <h1>Hola, {{ nombre }}</h1>
+    <p style="color: #64748b;">Hoy es <strong>{{ dia_nombre }}</strong></p>
 </div>
 
-<div class="section-title">Tus Rutinas</div>
-
-{% if rutinas and rutinas|length > 0 %}
-    <div class="grid">
-        {% for rutina in rutinas %}
-        <div class="routine-card" onclick="window.location.href='/detalle_rutina/{{ rutina.id }}'">
-            <div class="routine-info">
-                <h3>{{ rutina.nombre_rutina }}</h3>
-                <span>Toca para ver el plan del día</span>
-            </div>
-            <div class="arrow-icon">→</div>
+<!-- ── TARJETA PRINCIPAL: FOCO DE HOY ── -->
+<div class="today-card">
+    <div class="today-header">
+        <div>
+            <span class="today-tag">Entrenamiento de hoy</span>
+            <h2 style="margin-top: 8px; font-size: 1.4rem;">Tu progreso</h2>
         </div>
-        {% endfor %}
+        <div style="text-align: right;">
+            <span style="font-size: 1.8rem; font-weight: 900; color: var(--accent-color);">{{ porcentaje_hoy }}%</span>
+        </div>
     </div>
-{% else %}
-    <div class="card" style="text-align: center; padding: 60px 20px; border-style: dashed; border-width: 2px;">
-        <div style="font-size: 3rem; margin-bottom: 16px;">💪</div>
-        <h3 style="margin-bottom: 8px;">No hay rutinas todavía</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 24px;">Empieza creando tu primer plan de entrenamiento personalizado.</p>
-        <a href="/api/crear_rutina" class="btn btn-primary" style="display: inline-block; width: auto; padding: 12px 24px;">Crear mi primera rutina</a>
-    </div>
-{% endif %}
 
-{% if rutinas and rutinas|length > 0 %}
-<div style="margin-top: 32px;">
-    <a href="/api/crear_rutina" class="btn btn-primary" style="background: transparent; border: 2px solid var(--accent-color); color: var(--accent-color);">
-        + Crear Nueva Rutina
-    </a>
+    <div class="progress-container">
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: {{ porcentaje_hoy }}%;"></div>
+        </div>
+    </div>
+
+    {% if ejercicios_hoy %}
+        <div class="today-exercises">
+            {% for ej in ejercicios_hoy %}
+            <a href="/detalle_ejercicio/1/{{ ej.id }}" class="today-item {% if ej.completado %}done{% endif %}">
+                <div class="exercise-info">
+                    <h4>{{ ej.nombre }}</h4>
+                    <p>{{ ej.subgrupo }} • {{ ej.rutina_nombre }}</p>
+                </div>
+                <div class="status-icon">
+                    {% if ej.completado %} ✅ {% else %} 🟦 {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px; margin-top: 10px;">
+            <p style="color: #64748b; font-size: 0.9rem;">No tienes ejercicios programados para hoy.</p>
+        </div>
+    {% endif %}
 </div>
-{% endif %}
+
+<!-- ── SECCIÓN: TODAS MIS RUTINAS ── -->
+<div class="section-title">Gestionar mis rutinas</div>
+<div class="grid" style="grid-template-columns: 1fr;">
+    {% for rutina in rutinas %}
+    <a href="/detalle_rutina/{{ rutina.id }}" class="routine-card-mini">
+        <div style="font-weight: 700;">{{ rutina.nombre_rutina }}</div>
+        <div style="color: #64748b;">Ver plan →</div>
+    </a>
+    {% endfor %}
+</div>
+
+<div style="margin-top: 24px; display: flex; gap: 10px;">
+    <a href="/api/crear_rutina" class="btn btn-primary" style="flex: 1; padding: 14px;">+ Nueva Rutina</a>
+</div>
+
 {% endblock %}

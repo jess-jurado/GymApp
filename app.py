@@ -258,7 +258,49 @@ def dashboard():
         nombre_usuario = res[0] if res else "Usuario"
         session['user_nombre'] = nombre_usuario
 
-    # Obtener rutinas únicas con su ID
+    # ── LÓGICA DE ENTRENAMIENTO DE HOY ──
+    dias_map = {
+        0: "Lunes", 1: "Martes", 2: "Miércoles", 3: "Jueves",
+        4: "Viernes", 5: "Sábado", 6: "Domingo"
+    }
+    dia_semana_index = datetime.now().weekday()
+    dia_actual_nombre = dias_map[dia_semana_index]
+    
+    # Obtener todos los ejercicios que tocan HOY en cualquier rutina del usuario
+    cursor.execute("""
+        SELECT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, r.id as r_id, r.Nombre_rutina
+        FROM Rutinas r
+        JOIN Ejercicios e ON r.Id_ejercicio = e.id
+        WHERE r.Usuario_id = ? AND r.Dia = ?
+    """, (user_id, dia_actual_nombre))
+    ejercicios_hoy_rows = cursor.fetchall()
+
+    # Obtener completados hoy
+    inicio_hoy = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    cursor.execute(
+        "SELECT DISTINCT Id_ejercicio FROM Historial WHERE Usuario_id = ? AND Fecha >= ?",
+        (user_id, inicio_hoy)
+    )
+    completados_ids = {row[0] for row in cursor.fetchall()}
+
+    ejercicios_hoy = []
+    total_hoy = len(ejercicios_hoy_rows)
+    realizados_hoy = 0
+
+    for eid, nombre_ej, subgrupo, rid, n_rutina in ejercicios_hoy_rows:
+        esta_hecho = eid in completados_ids
+        if esta_hecho: realizados_hoy += 1
+        ejercicios_hoy.append({
+            "id": eid,
+            "nombre": nombre_ej,
+            "subgrupo": subgrupo,
+            "completado": esta_hecho,
+            "rutina_nombre": n_rutina
+        })
+
+    porcentaje_hoy = int((realizados_hoy / total_hoy * 100)) if total_hoy > 0 else 0
+
+    # ── OBTENER TODAS LAS RUTINAS (para la lista de abajo) ──
     cursor.execute("SELECT id, Nombre_rutina FROM Rutinas WHERE Usuario_id = ?", (user_id,))
     rows = cursor.fetchall()
 
@@ -274,7 +316,12 @@ def dashboard():
     cursor.close()
     conn.close()
 
-    return render_template('dashboard.html', rutinas=rutinas, nombre=nombre_usuario)
+    return render_template('dashboard.html', 
+                           rutinas=rutinas, 
+                           nombre=nombre_usuario,
+                           dia_nombre=dia_actual_nombre,
+                           ejercicios_hoy=ejercicios_hoy,
+                           porcentaje_hoy=porcentaje_hoy)
 
 @app.route('/logout')
 def logout():
