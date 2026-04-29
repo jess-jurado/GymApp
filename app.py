@@ -139,6 +139,12 @@ def login():
         # USAR bcrypt EN LUGAR DE check_password_hash
         if user and bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):
             session['user_id'] = user[0]
+            # Guardamos el nombre en sesión para no tener que consultarlo siempre
+            cursor.execute("SELECT Nombre FROM Usuarios WHERE Id = ?", (user[0],))
+            user_data = cursor.fetchone()
+            if user_data:
+                session['user_nombre'] = user_data[0]
+                
             flash("Inicio de sesión exitoso.", "success")
             return redirect(url_for('dashboard'))
         else:
@@ -238,6 +244,14 @@ def dashboard():
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Obtener nombre del usuario si no está en sesión
+    nombre_usuario = session.get('user_nombre')
+    if not nombre_usuario:
+        cursor.execute("SELECT Nombre FROM Usuarios WHERE Id = ?", (user_id,))
+        res = cursor.fetchone()
+        nombre_usuario = res[0] if res else "Usuario"
+        session['user_nombre'] = nombre_usuario
+
     # Obtener rutinas únicas con su ID
     cursor.execute("SELECT id, Nombre_rutina FROM Rutinas WHERE Usuario_id = ?", (user_id,))
     rows = cursor.fetchall()
@@ -254,7 +268,13 @@ def dashboard():
     cursor.close()
     conn.close()
 
-    return render_template('dashboard.html', rutinas=rutinas)
+    return render_template('dashboard.html', rutinas=rutinas, nombre=nombre_usuario)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Has cerrado sesión correctamente.", "success")
+    return redirect(url_for('login'))
 
 
 

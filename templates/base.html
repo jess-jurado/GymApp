@@ -24,7 +24,10 @@
     <div class="top-bar">
         <div class="logo">GymBRoot</div>
         {% if session.get('user_id') %}
-            <a href="/dashboard" style="color: var(--text-secondary); text-decoration: none;">Dashboard</a>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a href="/dashboard" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">Dashboard</a>
+                <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 0.9rem; font-weight: 600;">Cerrar Sesión</a>
+            </div>
         {% endif %}
     </div>
 
