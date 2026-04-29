@@ -75,6 +75,9 @@ def service_worker():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if session.get('user_id'):
+        return redirect(url_for('dashboard'))
+        
     if request.method == 'POST':
         nombre = request.form['nombre']
         email = request.form['email']
@@ -125,6 +128,9 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if session.get('user_id'):
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']

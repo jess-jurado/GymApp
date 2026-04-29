@@ -23,7 +23,8 @@
 <body>
     <div class="top-bar">
         <div class="logo">GymBRoot</div>
-        {% if session.get('user_id') %}
+        {# Solo mostramos el menú si el usuario está logueado Y NO estamos en login/registro #}
+        {% if session.get('user_id') and request.endpoint not in ['login', 'register'] %}
             <div style="display: flex; gap: 15px; align-items: center;">
                 <a href="/dashboard" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">Dashboard</a>
                 <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 0.9rem; font-weight: 600;">Cerrar Sesión</a>
@@ -34,17 +35,31 @@
     <main class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+                <div id="flash-container">
                 {% for category, message in messages %}
-                    <div class="card" style="border-left: 4px solid var(--{{ 'success' if category == 'success' else 'danger' }});">
+                    <div class="card flash-message" style="border-left: 4px solid var(--{{ 'success' if category == 'success' else 'danger' }}); margin-bottom: 15px; transition: opacity 0.5s ease;">
                         {{ message }}
                     </div>
                 {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
     </main>
 
+    <script>
+        // Auto-ocultar mensajes flash después de 4 segundos
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.flash-message');
+            messages.forEach(msg => {
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500);
+                }, 4000);
+            });
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
