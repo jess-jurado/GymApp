@@ -92,7 +92,7 @@
     {% if ejercicios_hoy %}
         <div class="today-exercises">
             {% for ej in ejercicios_hoy %}
-            <a href="/detalle_ejercicio/1/{{ ej.id }}" class="today-item {% if ej.completado %}done{% endif %}">
+            <a href="/detalle_ejercicio/{{ ej.r_id }}/{{ ej.id }}" class="today-item {% if ej.completado %}done{% endif %}">
                 <div class="exercise-info">
                     <h4>{{ ej.nombre }}</h4>
                     <p>{{ ej.subgrupo }} • {{ ej.rutina_nombre }}</p>

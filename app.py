@@ -295,7 +295,8 @@ def dashboard():
             "nombre": nombre_ej,
             "subgrupo": subgrupo,
             "completado": esta_hecho,
-            "rutina_nombre": n_rutina
+            "rutina_nombre": n_rutina,
+            "r_id": rid
         })
 
     porcentaje_hoy = int((realizados_hoy / total_hoy * 100)) if total_hoy > 0 else 0
@@ -411,15 +412,13 @@ def detalle_ejercicio(rutina_id, ejercicio_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Obtener detalles del ejercicio específico dentro de la rutina
+    # Obtener detalles del ejercicio directamente por su ID
     query_ejercicio = """
-        SELECT e.id, e.Nombre_ejercicio, e.Subgrupo_muscular, e.imagen_url, e.Grupo_muscular
-        FROM Ejercicios e
-        JOIN Rutinas r ON e.id = r.Id_ejercicio
-        WHERE r.Nombre_rutina = (SELECT Nombre_rutina FROM Rutinas WHERE id = ?) 
-        AND e.id = ?
+        SELECT id, Nombre_ejercicio, Subgrupo_muscular, imagen_url, Grupo_muscular
+        FROM Ejercicios
+        WHERE id = ?
     """
-    cursor.execute(query_ejercicio, (rutina_id, ejercicio_id))
+    cursor.execute(query_ejercicio, (ejercicio_id,))
     ejercicio = cursor.fetchone()
 
     # Evitar el error si no se encuentra el ejercicio
