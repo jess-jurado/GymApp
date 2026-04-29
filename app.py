@@ -286,11 +286,21 @@ def detalle_rutina(id):
     cursor.execute(query_ejercicios, (nombre_rutina, usuario_id))
     ejercicios = cursor.fetchall()
 
-    # Ejercicios completados hoy (para los checkmarks)
-    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    # Forzar zona horaria Madrid para que coincida con el móvil del usuario
+    import os, time
+    os.environ['TZ'] = 'Europe/Madrid'
+    try:
+        time.tzset()
+    except AttributeError:
+        pass # Windows doesn't have tzset
+
+    # Ejercicios completados hoy (para los checkmarks) - Versión robusta
+    ahora = datetime.now()
+    inicio_hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+    
     cursor.execute(
-        "SELECT DISTINCT Id_ejercicio FROM Historial WHERE Usuario_id = ? AND Fecha LIKE ?",
-        (usuario_id, f"{fecha_hoy}%")
+        "SELECT DISTINCT Id_ejercicio FROM Historial WHERE Usuario_id = ? AND Fecha >= ?",
+        (usuario_id, inicio_hoy)
     )
     completados_hoy = {row[0] for row in cursor.fetchall()}
 

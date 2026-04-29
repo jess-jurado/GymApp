@@ -12,7 +12,7 @@
         background: #000;
         border: 1px solid #334155;
     }
-    .ejercicio-image-container img { width: 100%; display: block; opacity: 0.9; }
+    .ejercicio-image-container img { width: 100%; display: block; opacity: 0.8; }
 
     /* ── Cardio ── */
     .cardio-badge {
@@ -22,324 +22,271 @@
         padding: 4px 14px; border-radius: 20px;
         font-size: 0.8rem; font-weight: 700; margin-bottom: 16px;
     }
-    .cardio-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+    .cardio-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .cardio-stat-card {
         background: #111827; border: 1px solid #1e3a5f;
         border-radius: 16px; padding: 20px 16px; text-align: center;
     }
-    .cardio-stat-card .stat-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
-    .cardio-stat-card label {
-        display: block; font-size: 0.75rem; color: var(--text-secondary);
-        margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;
-    }
     .cardio-stat-card input {
-        background: transparent; border: none;
-        border-bottom: 2px solid #334155; width: 100%;
-        text-align: center; font-size: 1.6rem; font-weight: 800;
-        color: #38bdf8; padding: 4px 0; outline: none; margin-bottom: 4px;
+        background: transparent; border: none; border-bottom: 2px solid #334155;
+        width: 100%; text-align: center; font-size: 1.6rem; font-weight: 800;
+        color: #38bdf8; outline: none;
     }
-    .cardio-stat-card input:focus { border-bottom-color: #38bdf8; }
-    .cardio-stat-card .stat-unit { font-size: 0.75rem; color: var(--text-secondary); }
 
-    /* ── Serie rows ── */
+    /* ── Nueva Serie UI ── */
     .serie-row {
         background: var(--card-bg);
         border: 1px solid #334155;
-        border-radius: var(--border-radius);
-        padding: 14px 16px;
-        margin-bottom: 12px;
-        animation: fadeSlide 0.2s ease;
-    }
-    .serie-row.done { border-color: #22c55e; background: rgba(34,197,94,0.06); }
-    @keyframes fadeSlide {
-        from { opacity: 0; transform: translateY(-8px); }
-        to   { opacity: 1; transform: translateY(0); }
+        border-radius: 18px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     .serie-header {
         display: flex; justify-content: space-between;
-        align-items: center; margin-bottom: 12px;
+        align-items: center; margin-bottom: 14px;
     }
-    .serie-label { font-weight: 800; color: var(--accent-color); font-size: 0.85rem; letter-spacing: 0.05em; }
-    .serie-remove-btn {
-        background: transparent; border: none;
-        color: #64748b; font-size: 1.1rem; cursor: pointer;
-        padding: 2px 6px; border-radius: 6px; transition: color 0.15s;
-    }
-    .serie-remove-btn:hover { color: #ef4444; }
+    .serie-label { font-weight: 900; color: var(--accent-color); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .serie-remove-btn { color: #64748b; background: transparent; border: none; font-size: 0.8rem; }
 
-    /* ── Stepper grid ── */
+    /* ── Stepper/Wheel Picker ── */
     .stepper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .stepper-card {
-        background: #111827; border-radius: 14px;
-        padding: 10px 8px; text-align: center;
+        background: #0f172a; border-radius: 14px;
+        padding: 12px 8px; text-align: center;
+        border: 1px solid #1e293b;
+        touch-action: none; /* Crucial para el scroll táctil personalizado */
     }
     .stepper-card label {
-        display: block; font-size: 0.7rem;
-        color: var(--text-secondary); margin-bottom: 6px;
-        text-transform: uppercase; letter-spacing: 0.06em;
+        display: block; font-size: 0.65rem; color: #94a3b8;
+        margin-bottom: 8px; text-transform: uppercase; font-weight: 700;
     }
-    .stepper {
-        display: flex; align-items: center;
-        justify-content: center; gap: 4px;
+    .stepper-control {
+        display: flex; align-items: center; justify-content: space-between;
+        background: #1e293b; border-radius: 12px; padding: 4px;
     }
     .stepper-btn {
-        width: 44px; height: 44px;
-        background: #1e293b; border: 1px solid #334155;
-        color: white; font-size: 1.5rem; font-weight: 300;
+        width: 48px; height: 48px;
+        background: #334155; border: none;
+        color: white; font-size: 1.8rem;
         border-radius: 10px; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         -webkit-tap-highlight-color: transparent;
-        user-select: none; touch-action: manipulation;
-        transition: background 0.1s, transform 0.08s;
     }
-    .stepper-btn:active { background: var(--accent-color); color: var(--bg-color); transform: scale(0.92); }
-    .stepper-value {
-        min-width: 52px; text-align: center;
-        font-size: 1.5rem; font-weight: 800; color: white;
-        padding: 0 4px;
+    .stepper-btn:active { background: var(--accent-color); transform: scale(0.95); }
+    
+    /* El contenedor del valor que permite scroll/drag */
+    .value-scroll-area {
+        flex: 1; position: relative;
+        display: flex; flex-direction: column; align-items: center;
+        overflow: hidden; cursor: ns-resize;
     }
-    .stepper-unit { font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; }
+    .stepper-value-input {
+        background: transparent; border: none;
+        width: 100%; text-align: center;
+        font-size: 1.8rem; font-weight: 800; color: white;
+        padding: 0; outline: none;
+        pointer-events: auto; /* Permite escribir si se toca directamente */
+    }
+    .stepper-unit { font-size: 0.65rem; color: #475569; margin-top: 4px; font-weight: 600; }
 
-    /* ── Add serie button ── */
     #add-serie-btn {
-        width: 100%; margin-top: 4px; margin-bottom: 4px;
-        border: 1.5px dashed #334155; background: transparent;
-        color: var(--text-secondary); padding: 12px;
-        border-radius: var(--border-radius); font-size: 0.95rem;
-        font-weight: 600; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+        width: 100%; border: 2px dashed #334155;
+        background: rgba(51, 65, 85, 0.2); color: #94a3b8;
+        padding: 14px; border-radius: 16px;
+        font-weight: 700; margin-bottom: 20px;
     }
-    #add-serie-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+    .btn-primary { padding: 18px; font-size: 1.1rem; border-radius: 16px; width: 100%; font-weight: 800; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div style="margin-bottom: 24px;">
     <a href="javascript:history.back()" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">← Volver</a>
-    <h1 style="margin-top: 12px;">{{ nombre_ejercicio }}</h1>
+    <h1 style="margin-top: 12px; font-size: 1.8rem;">{{ nombre_ejercicio }}</h1>
     {% if is_cardio %}
         <span class="cardio-badge">🏃 Cardio</span>
     {% else %}
-        <p>{{ subgrupo_muscular }}</p>
+        <p style="color: #94a3b8;">{{ subgrupo_muscular }}</p>
     {% endif %}
 </div>
 
-{% if imagen_url %}
-<div class="ejercicio-image-container">
-    <img src="{{ imagen_url }}" alt="{{ nombre_ejercicio }}">
-</div>
-{% endif %}
-
 <form id="detalle-ejercicio-form">
 {% if is_cardio %}
-    <!-- ── Formulario Cardio ── -->
     <div class="cardio-stat-grid">
         <div class="cardio-stat-card">
-            <span class="stat-icon">⏱️</span>
-            <label for="duracion">Duración</label>
-            <input type="number" id="duracion" placeholder="30" min="1" max="300" required>
-            <span class="stat-unit">minutos</span>
+            <label>Duración (min)</label>
+            <input type="number" id="duracion" inputmode="numeric" placeholder="30" required>
         </div>
         <div class="cardio-stat-card">
-            <span class="stat-icon">🔥</span>
-            <label for="calorias">Calorías</label>
-            <input type="number" id="calorias" placeholder="250" min="0" required>
-            <span class="stat-unit">kcal quemadas</span>
+            <label>Calorías (kcal)</label>
+            <input type="number" id="calorias" inputmode="numeric" placeholder="200" required>
         </div>
     </div>
 {% else %}
-    <!-- ── Formulario Series dinámico ── -->
     <div id="series-container"></div>
-    <button type="button" id="add-serie-btn">＋ Añadir Serie</button>
+    <button type="button" id="add-serie-btn">＋ AÑADIR SERIE</button>
 {% endif %}
 
-    <div style="margin-top: 20px;">
-        <button type="submit" class="btn btn-primary">💾 Guardar Entrenamiento</button>
-    </div>
+    <button type="submit" class="btn btn-primary">GUARDAR ENTRENAMIENTO</button>
 </form>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-const IS_CARDIO   = {{ 'true' if is_cardio else 'false' }};
+const IS_CARDIO = {{ 'true' if is_cardio else 'false' }};
 const EJERCICIO_ID = "{{ ejercicio_id }}";
 
-/* ════════════════════════════════════
-   STEPPER logic
-════════════════════════════════════ */
 {% if not is_cardio %}
 let serieCount = 0;
-let holdTimer = null;
-let holdInterval = null;
-
-function getStepperValue(btn) {
-    return parseFloat(btn.closest('.stepper').querySelector('.stepper-value').dataset.value) || 0;
-}
-function setStepperValue(btn, val) {
-    const span = btn.closest('.stepper').querySelector('.stepper-value');
-    const min  = parseFloat(span.dataset.min) || 0;
-    const step = parseFloat(span.dataset.step) || 1;
-    val = Math.max(min, Math.round(val / step) * step);
-    // Format: show .5 decimals only when needed
-    span.dataset.value = val;
-    span.textContent   = (step < 1) ? val.toFixed(1) : val;
-}
-
-function stepBtn(btn, direction) {
-    const span = btn.closest('.stepper').querySelector('.stepper-value');
-    const step = parseFloat(span.dataset.step) || 1;
-    setStepperValue(btn, getStepperValue(btn) + direction * step);
-}
-
-function startHold(btn, direction) {
-    stepBtn(btn, direction);
-    holdTimer = setTimeout(() => {
-        holdInterval = setInterval(() => stepBtn(btn, direction), 80);
-    }, 400);
-}
-function stopHold() {
-    clearTimeout(holdTimer);
-    clearInterval(holdInterval);
-}
 
 function addSerie(defaultReps = 10, defaultPeso = 0) {
     serieCount++;
     const container = document.getElementById('series-container');
     const div = document.createElement('div');
-    div.classList.add('serie-row');
-    div.dataset.serie = serieCount;
+    div.className = 'serie-row';
+    div.dataset.index = serieCount;
 
     div.innerHTML = `
         <div class="serie-header">
-            <span class="serie-label">SERIE ${serieCount}</span>
-            ${serieCount > 1
-                ? `<button type="button" class="serie-remove-btn" onclick="removeSerie(this)">✕ Quitar</button>`
-                : ''}
+            <span class="serie-label">Serie ${serieCount}</span>
+            ${serieCount > 1 ? `<button type="button" class="serie-remove-btn" onclick="this.closest('.serie-row').remove()">Eliminar</button>` : ''}
         </div>
         <div class="stepper-grid">
+            <!-- REPS PICKER -->
             <div class="stepper-card">
                 <label>Repeticiones</label>
-                <div class="stepper">
-                    <button type="button" class="stepper-btn"
-                        onmousedown="startHold(this,-1)" onmouseup="stopHold()" onmouseleave="stopHold()"
-                        ontouchstart="startHold(this,-1)" ontouchend="stopHold()">−</button>
-                    <span class="stepper-value" data-value="${defaultReps}" data-min="1" data-step="1">${defaultReps}</span>
-                    <button type="button" class="stepper-btn"
-                        onmousedown="startHold(this,1)" onmouseup="stopHold()" onmouseleave="stopHold()"
-                        ontouchstart="startHold(this,1)" ontouchend="stopHold()">+</button>
+                <div class="stepper-control">
+                    <button type="button" class="stepper-btn" onclick="adjustValue(this, -1)">−</button>
+                    <div class="value-scroll-area" onwheel="handleWheel(event, this)" 
+                         ontouchstart="handleTouchStart(event, this)" ontouchmove="handleTouchMove(event, this)">
+                        <input type="number" class="stepper-value-input" value="${defaultReps}" 
+                               data-step="1" data-min="1" inputmode="numeric">
+                    </div>
+                    <button type="button" class="stepper-btn" onclick="adjustValue(this, 1)">+</button>
                 </div>
                 <div class="stepper-unit">reps</div>
             </div>
+            <!-- PESO PICKER -->
             <div class="stepper-card">
                 <label>Peso</label>
-                <div class="stepper">
-                    <button type="button" class="stepper-btn"
-                        onmousedown="startHold(this,-1)" onmouseup="stopHold()" onmouseleave="stopHold()"
-                        ontouchstart="startHold(this,-1)" ontouchend="stopHold()">−</button>
-                    <span class="stepper-value" data-value="${defaultPeso}" data-min="0" data-step="0.5">${parseFloat(defaultPeso).toFixed(1)}</span>
-                    <button type="button" class="stepper-btn"
-                        onmousedown="startHold(this,1)" onmouseup="stopHold()" onmouseleave="stopHold()"
-                        ontouchstart="startHold(this,1)" ontouchend="stopHold()">+</button>
+                <div class="stepper-control">
+                    <button type="button" class="stepper-btn" onclick="adjustValue(this, -0.5)">−</button>
+                    <div class="value-scroll-area" onwheel="handleWheel(event, this)"
+                         ontouchstart="handleTouchStart(event, this)" ontouchmove="handleTouchMove(event, this)">
+                        <input type="number" class="stepper-value-input" value="${parseFloat(defaultPeso).toFixed(1)}" 
+                               data-step="0.5" data-min="0" step="0.5" inputmode="decimal">
+                    </div>
+                    <button type="button" class="stepper-btn" onclick="adjustValue(this, 0.5)">+</button>
                 </div>
                 <div class="stepper-unit">kg</div>
             </div>
         </div>
     `;
     container.appendChild(div);
-    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function removeSerie(btn) {
-    btn.closest('.serie-row').remove();
-    // Re-numerar
-    document.querySelectorAll('.serie-row').forEach((row, idx) => {
-        row.dataset.serie = idx + 1;
-        row.querySelector('.serie-label').textContent = `SERIE ${idx + 1}`;
-    });
-    serieCount = document.querySelectorAll('.serie-row').length;
+// ── LÓGICA DE CONTROL (BOTONES Y SCROLL) ──
+
+function adjustValue(el, delta) {
+    const input = el.closest('.stepper-control').querySelector('.stepper-value-input');
+    let val = parseFloat(input.value) || 0;
+    const min = parseFloat(input.dataset.min) || 0;
+    const step = parseFloat(input.dataset.step) || 1;
+    
+    val = Math.max(min, val + delta);
+    input.value = (step < 1) ? val.toFixed(1) : Math.round(val);
+}
+
+// Soporte para rueda de ratón
+function handleWheel(e, area) {
+    e.preventDefault();
+    const input = area.querySelector('input');
+    const step = parseFloat(input.dataset.step);
+    adjustValue(input, e.deltaY < 0 ? step : -step);
+}
+
+// Soporte para Scroll Táctil (Drag to slide)
+let touchStartY = 0;
+let touchStartVal = 0;
+
+function handleTouchStart(e, area) {
+    touchStartY = e.touches[0].clientY;
+    touchStartVal = parseFloat(area.querySelector('input').value) || 0;
+}
+
+function handleTouchMove(e, area) {
+    e.preventDefault();
+    const touchY = e.touches[0].clientY;
+    const deltaY = touchStartY - touchY;
+    const input = area.querySelector('input');
+    const step = parseFloat(input.dataset.step);
+    
+    // Sensibilidad: cada 15px de movimiento es un paso
+    const stepsToMove = Math.floor(deltaY / 15);
+    if (stepsToMove !== 0) {
+        let newVal = touchStartVal + (stepsToMove * step);
+        const min = parseFloat(input.dataset.min) || 0;
+        newVal = Math.max(min, newVal);
+        input.value = (step < 1) ? newVal.toFixed(1) : Math.round(newVal);
+    }
 }
 
 document.getElementById('add-serie-btn').onclick = () => {
     const rows = document.querySelectorAll('.serie-row');
-    let lastReps = 10, lastPeso = 0;
+    let r = 10, p = 0;
     if (rows.length > 0) {
         const last = rows[rows.length - 1];
-        const spans = last.querySelectorAll('.stepper-value');
-        lastReps = parseFloat(spans[0].dataset.value) || 10;
-        lastPeso = parseFloat(spans[1].dataset.value) || 0;
+        r = last.querySelectorAll('input')[0].value;
+        p = last.querySelectorAll('input')[1].value;
     }
-    addSerie(lastReps, lastPeso);
+    addSerie(r, p);
 };
 
-// Inicializar con la primera serie
 document.addEventListener('DOMContentLoaded', () => {
-    // Intentar cargar datos históricos del día si venimos del historial
+    // Carga inicial
     const urlParams = new URLSearchParams(window.location.search);
     const fecha = urlParams.get('fecha');
-    if (fecha && EJERCICIO_ID) {
+    if (fecha) {
         fetch(`/api/obtener_series/${EJERCICIO_ID}/${fecha}`)
             .then(r => r.json())
             .then(data => {
                 if (data.series && data.series.length > 0) {
                     data.series.forEach(s => addSerie(s.repeticiones, s.peso));
-                } else {
-                    addSerie();
-                }
-            })
-            .catch(() => addSerie());
-    } else {
-        addSerie();
-    }
+                } else addSerie();
+            }).catch(() => addSerie());
+    } else addSerie();
 });
 {% endif %}
 
-/* ════════════════════════════════════
-   SUBMIT
-════════════════════════════════════ */
-document.getElementById('detalle-ejercicio-form').addEventListener('submit', function(e) {
+// ── ENVÍO DE DATOS ──
+document.getElementById('detalle-ejercicio-form').onsubmit = (e) => {
     e.preventDefault();
-
+    
     if (IS_CARDIO) {
-        const duracion = document.getElementById('duracion').value;
-        const calorias = document.getElementById('calorias').value;
-        if (!duracion || !calorias) return alert('Completa la duración y las calorías');
-
+        const d = document.getElementById('duracion').value;
+        const c = document.getElementById('calorias').value;
         fetch(`/guardar_cardio/${EJERCICIO_ID}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ duracion: parseInt(duracion), calorias: parseInt(calorias) })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.error) alert(data.error);
-            else { alert('¡Cardio guardado! 🔥'); window.history.back(); }
-        });
-
+            body: JSON.stringify({ duracion: d, calorias: c })
+        }).then(() => window.history.back());
     } else {
         const rows = document.querySelectorAll('.serie-row');
-        if (rows.length === 0) return alert('Añade al menos una serie');
-
-        let datosEjercicio = [];
-        let valido = true;
-        rows.forEach((row, idx) => {
-            const spans = row.querySelectorAll('.stepper-value');
-            const reps  = parseFloat(spans[0].dataset.value) || 0;
-            const peso  = parseFloat(spans[1].dataset.value) || 0;
-            if (reps < 1) { alert(`La serie ${idx + 1} necesita al menos 1 repetición`); valido = false; return; }
-            datosEjercicio.push({ serie: idx + 1, repeticiones: reps, peso: peso });
-        });
-        if (!valido) return;
-
+        const data = Array.from(rows).map((row, i) => ({
+            serie: i + 1,
+            repeticiones: row.querySelectorAll('input')[0].value,
+            peso: row.querySelectorAll('input')[1].value
+        }));
+        
         fetch(`/guardar_series/${EJERCICIO_ID}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ series: datosEjercicio })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.error) alert(data.error);
-            else { alert('¡Entrenamiento guardado! 💪'); window.history.back(); }
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ series: data })
+        }).then(() => {
+            alert("¡Entrenamiento guardado! 💪");
+            window.history.back();
         });
     }
-});
+};
 </script>
 {% endblock %}
