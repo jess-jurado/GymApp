@@ -111,6 +111,12 @@
     {% endif %}
 </div>
 
+{% if imagen_url %}
+<div class="ejercicio-image-container">
+    <img src="{{ imagen_url }}" alt="{{ nombre_ejercicio }}">
+</div>
+{% endif %}
+
 <form id="detalle-ejercicio-form">
 {% if is_cardio %}
     <div class="cardio-stat-grid">
