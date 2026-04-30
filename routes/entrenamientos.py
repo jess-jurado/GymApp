@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from config import get_db_connection
-from routes.auth_routes import token_required
+from routes.auth_utils import token_required
 
 entrenamientos_bp  = Blueprint("entrenamientos", __name__)
 
